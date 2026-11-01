@@ -196,7 +196,8 @@ def glob_resolve(pattern):
     while i < len(parts) and not any(ch in parts[i] for ch in "*?"):
         fixed /= parts[i]
         i += 1
-    rest = "\\".join(parts[i:]) or "*"
+    # os.sep: backslash on Windows (pathlib accepts it), forward slash on POSIX
+    rest = os.sep.join(parts[i:]) or "*"
     try:
         return [x for x in fixed.glob(rest)]
     except Exception:
