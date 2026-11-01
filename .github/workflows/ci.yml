@@ -19,10 +19,10 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Safety suite (sandboxed, manifest-hashed)
-        run: python opensweep/tests/test_suite.py
+        run: python tests/test_suite.py
       - name: Web UI server selftest
-        run: python opensweep/tests/server_selftest.py
+        run: python tests/server_selftest.py
       - name: GUI selftest (tkinter build)
-        run: python opensweep/gui.py --selftest
+        run: python gui.py --selftest
       - name: Compile check (all sources)
-        run: python -m py_compile opensweep/opensweep.py opensweep/gui.py opensweep/server.py
+        run: python -m py_compile opensweep.py gui.py server.py
