@@ -108,7 +108,8 @@ def build_junk():
         junk("AppData/Local/DoubaoWork/User Data/ClipboardTemp", ["ct.dat"])
         b = "AppData/Local/Google/Chrome/User Data/Default"
     else:
-        junk("Temp", [f"native_{i:03d}.tmp" for i in range(20)])
+        # no $TMPDIR rule on darwin yet (needs age-based filtering) - the
+        # engine must not be tested against rules that do not exist
         b = "home/Library/Application Support/Google/Chrome/Default"
     junk(b + "/Cache", [f"c{i}.dat" for i in range(6)])
     junk(b + "/Code Cache", ["cc.dat"])
