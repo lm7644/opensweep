@@ -706,9 +706,7 @@ def tools_report():
                 found = p2
                 break
         if not found and name == "winget":
-            r = subprocess.run(["where", "winget"], capture_output=True, text=True)
-            if r.returncode == 0 and r.stdout.strip():
-                found = r.stdout.strip().splitlines()[0]
+            found = shutil.which("winget") or ""
         rows.append({"tool": name, "present": bool(found), "path": found,
                      "purpose": purpose, "usage": cmd})
     return rows
@@ -719,74 +717,91 @@ def tools_report():
 # --------------------------------------------------------------------------
 
 def startup_report():
-    """Autostart inventory: Run keys + startup folders + auto services.
-    Borrowed *idea* from Autoruns; deep control still belongs to Autoruns."""
+    """Autostart inventory (read-only). Borrowed *idea* from Autoruns; deep
+    control still belongs to Autoruns (win) / launchctl (mac)."""
     items = []
-    run_keys = [
-        ("HKCU", winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run"),
-        ("HKLM", winreg.HKEY_LOCAL_MACHINE, r"Software\Microsoft\Windows\CurrentVersion\Run"),
-        ("HKLM", winreg.HKEY_LOCAL_MACHINE, r"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run"),
-    ]
-    for hive_name, hive, sub in run_keys:
+    if IS_WIN:
+        run_keys = [
+            ("HKCU", winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run"),
+            ("HKLM", winreg.HKEY_LOCAL_MACHINE, r"Software\Microsoft\Windows\CurrentVersion\Run"),
+            ("HKLM", winreg.HKEY_LOCAL_MACHINE, r"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run"),
+        ]
+        for hive_name, hive, sub in run_keys:
+            try:
+                with open_key(hive, sub) as k:
+                    i = 0
+                    while True:
+                        try:
+                            name, val, _ = winreg.EnumValue(k, i)
+                            items.append({"kind": "Run", "where": hive_name,
+                                          "name": name, "cmd": str(val)[:150]})
+                            i += 1
+                        except OSError:
+                            break
+            except OSError:
+                pass
+        for env in ("APPDATA", "ALLUSERSPROFILE"):
+            base = (Path(os.path.expandvars(f"%{env}%"))
+                    / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup")
+            try:
+                for f in base.iterdir():
+                    if f.is_file():
+                        items.append({"kind": "Folder", "where": "Startup",
+                                      "name": f.name, "cmd": str(f)[:150]})
+            except OSError:
+                pass
+        # auto-start services (read-only; capped)
         try:
-            with open_key(hive, sub) as k:
+            with open_key(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services") as rk:
+                names = []
                 i = 0
                 while True:
                     try:
-                        name, val, _ = winreg.EnumValue(k, i)
-                        items.append({"kind": "Run", "where": hive_name,
-                                      "name": name, "cmd": str(val)[:150]})
-                        i += 1
+                        names.append(winreg.EnumKey(rk, i)); i += 1
                     except OSError:
                         break
+                for sub in names:
+                    if len([x for x in items if x["kind"] == "Service"]) >= 200:
+                        break
+                    try:
+                        with open_key(winreg.HKEY_LOCAL_MACHINE,
+                                      rf"SYSTEM\CurrentControlSet\Services\{sub}") as k:
+                            start = winreg.QueryValueEx(k, "Start")[0]
+                            if start != 2:
+                                continue
+                            try:
+                                img = str(winreg.QueryValueEx(k, "ImagePath")[0])
+                            except OSError:
+                                continue
+                            if ".exe" not in img.lower():
+                                continue
+                            items.append({"kind": "Service", "where": "HKLM",
+                                          "name": sub, "cmd": img[:150]})
+                    except OSError:
+                        continue
         except OSError:
             pass
-    for env in ("APPDATA", "ALLUSERSPROFILE"):
-        base = (Path(os.path.expandvars(f"%{env}%"))
-                / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup")
-        try:
-            for f in base.iterdir():
-                if f.is_file():
-                    items.append({"kind": "Folder", "where": "Startup",
+    elif IS_MAC:
+        # LaunchAgents / LaunchDaemons plists (read-only inventory)
+        plist_dirs = [
+            ("User", Path(HOME) / "Library" / "LaunchAgents"),
+            ("Local", Path("/Library/LaunchAgents")),
+            ("System", Path("/Library/LaunchDaemons")),
+        ]
+        for where, d in plist_dirs:
+            try:
+                for f in sorted(d.glob("*.plist")):
+                    items.append({"kind": "Launch", "where": where,
                                   "name": f.name, "cmd": str(f)[:150]})
-        except OSError:
-            pass
-    # auto-start services (read-only; capped)
-    try:
-        with open_key(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services") as rk:
-            names = []
-            i = 0
-            while True:
-                try:
-                    names.append(winreg.EnumKey(rk, i)); i += 1
-                except OSError:
-                    break
-            for sub in names:
-                if len([x for x in items if x["kind"] == "Service"]) >= 200:
-                    break
-                try:
-                    with open_key(winreg.HKEY_LOCAL_MACHINE,
-                                  rf"SYSTEM\CurrentControlSet\Services\{sub}") as k:
-                        start = winreg.QueryValueEx(k, "Start")[0]
-                        if start != 2:
-                            continue
-                        try:
-                            img = str(winreg.QueryValueEx(k, "ImagePath")[0])
-                        except OSError:
-                            continue
-                        if ".exe" not in img.lower():
-                            continue
-                        items.append({"kind": "Service", "where": "HKLM",
-                                      "name": sub, "cmd": img[:150]})
-                except OSError:
-                    continue
-    except OSError:
-        pass
+            except OSError:
+                pass
     return items
 
 def installed_apps():
-    """ARP inventory (Add/Remove Programs), three registry views, read-only."""
+    """Installed-app inventory. Windows: ARP (three registry views)."""
     apps, seen = [], set()
+    if not IS_WIN:
+        return apps   # macOS equivalent lives in /Applications - not in scope v3
     views = [
         (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Uninstall"),
         (winreg.HKEY_LOCAL_MACHINE, r"Software\Microsoft\Windows\CurrentVersion\Uninstall"),
