@@ -1,0 +1,28 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+        python: ["3.10", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Safety suite (sandboxed, manifest-hashed)
+        run: python opensweep/tests/test_suite.py
+      - name: Web UI server selftest
+        run: python opensweep/tests/server_selftest.py
+      - name: GUI selftest (tkinter build)
+        run: python opensweep/gui.py --selftest
+      - name: Compile check (all sources)
+        run: python -m py_compile opensweep/opensweep.py opensweep/gui.py opensweep/server.py
