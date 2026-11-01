@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenSweep · 账本方向（初稿A）</title>
+<style>
+  /* 方向A「账本」：暖纸 × 墨 × 朱砂印。母题=每一次操作都是流水账，撤销=划销+印。
+     排印：正文17px/行高1.7，display 衬线，音阶1.25；间距 8pt 网格。 */
+  :root{
+    --paper:#f2ede1; --paper2:#eae4d4; --ink:#211d17; --ink2:#5c554a;
+    --hair:#c9c0ab; --cinnabar:#a63a24; --ok:#4a6b3a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);
+    font:17px/1.7 "Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+    text-wrap:pretty;padding:40px 0 80px}
+  .wrap{max-width:36em;margin:0 auto;padding:0 24px}
+  header{border-bottom:3px double var(--ink);padding-bottom:16px;margin-bottom:8px}
+  .mast{display:flex;justify-content:space-between;align-items:baseline}
+  h1{font-family:Georgia,"Noto Serif SC","Songti SC",SimSun,serif;
+     font-size:clamp(2rem,1.2rem+3.5vw,3.4rem);font-weight:700;letter-spacing:.02em;
+     text-wrap:balance}
+  .no{font-family:Consolas,monospace;font-size:14px;color:var(--ink2)}
+  .tagline{color:var(--ink2);font-size:14px;margin-top:4px}
+  h2{font-family:Georgia,"Noto Serif SC",SimSun,serif;font-size:22px;margin:40px 0 12px;
+     border-bottom:1px solid var(--hair);padding-bottom:6px}
+  /* KPI 台账行 */
+  .ledger{width:100%;border-collapse:collapse;margin-top:8px}
+  .ledger td{padding:9px 8px;border-bottom:1px solid var(--hair);vertical-align:baseline}
+  .ledger .n{font-family:Consolas,monospace;font-size:20px;text-align:right;width:110px}
+  .ledger .u{color:var(--ink2);font-size:14px;width:150px}
+  .stamp{display:inline-block;border:2px solid var(--cinnabar);color:var(--cinnabar);
+    font-family:"KaiTi","Noto Serif SC",SimSun,serif;font-weight:700;font-size:15px;
+    padding:2px 10px;transform:rotate(-4deg);border-radius:3px;letter-spacing:.2em}
+  .stamp.done{border-color:var(--ok);color:var(--ok);transform:rotate(2deg)}
+  /* 撤销=划销 */
+  .strike{position:relative;color:var(--ink2)}
+  .strike::after{content:"";position:absolute;left:-2px;right:-2px;top:55%;
+    height:2px;background:var(--cinnabar);transform:rotate(-1.2deg)}
+  ul.journal{list-style:none}
+  ul.journal li{padding:8px 4px;border-bottom:1px dashed var(--hair);
+    display:flex;gap:12px;align-items:baseline}
+  ul.journal .t{font-family:Consolas,monospace;font-size:14px;color:var(--ink2);
+    white-space:nowrap}
+  .foot{margin-top:56px;color:var(--ink2);font-size:13px;border-top:1px solid var(--hair);
+    padding-top:12px}
+  .red{color:var(--cinnabar)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mast">
+      <h1>OpenSweep 账本</h1>
+      <span class="no">No. 2026-11-01 · v2.2</span>
+    </div>
+    <p class="tagline">零网络 · 默认只读 · 每一笔操作皆可划销 —— 本机流水，第 2 页</p>
+  </header>
+
+  <h2>本机台账（2026-11-01 盘点）</h2>
+  <table class="ledger">
+    <tr><td>可清理痕迹（只读盘点，未动）</td><td class="n">18,399</td><td class="u">项 / 1.4 GB</td></tr>
+    <tr><td>Windows 隐私设置</td><td class="n">15 / 15</td><td class="u">已加固</td></tr>
+    <tr><td>自启动点在册</td><td class="n">103</td><td class="u">条（管控归 Autoruns）</td></tr>
+    <tr><td>已装软件在册</td><td class="n">184</td><td class="u">个（卸载归 BCU）</td></tr>
+    <tr><td>未销账 journal</td><td class="n">2</td><td class="u">份 · 均可还原</td></tr>
+  </table>
+  <p style="margin-top:10px"><span class="stamp done">已 盘 点</span></p>
+
+  <h2>昨日销账记录</h2>
+  <ul class="journal">
+    <li><span class="t">10-31 14:02</span><span>非管理员加固 <span class="strike">隐私设置 13 值</span></span><span class="stamp" style="font-size:13px">销</span></li>
+    <li><span class="t">10-31 22:35</span><span>提权加固 <span class="strike">活动历史 · AllowTelemetry · DiagTrack</span></span><span class="stamp" style="font-size:13px">销</span></li>
+    <li><span class="t">10-31 22:36</span><span>DiagTrack 服务停止 · 启动类型禁用</span><span class="stamp" style="font-size:13px">讫</span></li>
+  </ul>
+
+  <h2>三条家规</h2>
+  <table class="ledger">
+    <tr><td>一、不出网</td><td class="n" style="color:var(--ok)">0</td><td class="u">外联字节数</td></tr>
+    <tr><td>二、先备份后动手</td><td class="n">100%</td><td class="u">变更覆盖率</td></tr>
+    <tr><td>三、密码永不触碰</td><td class="n" class="red" style="color:var(--cinnabar)">0</td><td class="u">凭据库操作数</td></tr>
+  </table>
+
+  <p class="foot">OpenSweep · 洁室实现，与 CCleaner/Gen Digital 无关 · 本页为三方向初稿之 A「账本」，供选型</p>
+</div>
+</body>
+</html>

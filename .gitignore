@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+sandbox/
+*.log
+.DS_Store
+Thumbs.db
+design-demos/*.png

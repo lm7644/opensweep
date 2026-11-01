@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenSweep · 阅片方向（初稿B）</title>
+<style>
+  /* 方向B「阅片」：深底单点缀（单一青色，无霓虹无发光）。母题=体检阅片：
+     扫描=影像，痕迹=病灶标记，加固=医嘱。排印：等宽数值 + 黑体正文。 */
+  :root{
+    --bg:#101418; --panel:#171c22; --panel2:#1d242c; --line:#2a323c;
+    --fg:#e7ecf1; --mute:#8b96a3; --teal:#35c4a0; --warn:#e0a83e; --bad:#e0645c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--fg);
+    font:16px/1.65 "Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;padding:0 0 60px}
+  .top{display:flex;justify-content:space-between;align-items:center;
+    padding:18px 32px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .brand{font-size:20px;font-weight:700;letter-spacing:.04em}
+  .brand b{color:var(--teal);font-weight:700}
+  .meta{font-family:Consolas,monospace;font-size:13px;color:var(--mute)}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 32px}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px}
+  .k{font-size:13px;color:var(--mute)}
+  .v{font-family:Consolas,monospace;font-size:30px;margin-top:6px;letter-spacing:-.02em}
+  .v small{font-size:14px;color:var(--mute);letter-spacing:0}
+  .v.teal{color:var(--teal)}
+  h2{font-size:15px;font-weight:600;color:var(--mute);margin:34px 0 12px;
+    letter-spacing:.06em}
+  table{width:100%;border-collapse:collapse;background:var(--panel);
+    border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  th{font-size:13px;color:var(--mute);text-align:left;font-weight:600;
+    padding:10px 14px;background:var(--panel2);border-bottom:1px solid var(--line)}
+  td{padding:10px 14px;border-bottom:1px solid var(--line);font-size:14px}
+  tr:last-child td{border-bottom:none}
+  td.mono{font-family:Consolas,monospace}
+  .chip{display:inline-block;font-size:12px;padding:1px 9px;border-radius:10px;
+    border:1px solid var(--line);color:var(--mute)}
+  .chip.ok{color:var(--teal);border-color:var(--teal)}
+  .note{color:var(--mute);font-size:13px;margin-top:10px}
+  .foot{color:var(--mute);font-size:13px;margin-top:44px;border-top:1px solid var(--line);padding-top:14px}
+  @media (max-width:820px){.grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Open<b>Sweep</b></div>
+    <div class="meta">v2.2 · 127.0.0.1 only · 0 bytes out</div>
+  </div>
+  <div class="wrap">
+    <div class="grid">
+      <div class="card"><div class="k">可清理痕迹</div><div class="v">18,399 <small>项</small></div></div>
+      <div class="card"><div class="k">痕迹体积</div><div class="v">1.4 <small>GB</small></div></div>
+      <div class="card"><div class="k">隐私设置加固</div><div class="v teal">15<small>/15</small></div></div>
+      <div class="card"><div class="k">外联流量</div><div class="v">0 <small>B</small></div></div>
+    </div>
+
+    <h2>阅片所见 · 加固申请单</h2>
+    <table>
+      <tr><th>项目</th><th>所见</th><th>处置</th></tr>
+      <tr><td>Advertising ID</td><td class="mono">Enabled = 0</td><td><span class="chip ok">已固化</span></td></tr>
+      <tr><td>在线语音识别</td><td class="mono">HasAccepted = 0</td><td><span class="chip ok">已固化</span></td></tr>
+      <tr><td>活动历史上传</td><td class="mono">Publish/Upload = 0</td><td><span class="chip ok">已固化</span></td></tr>
+      <tr><td>DiagTrack 服务</td><td class="mono">Start = 4 · Stopped</td><td><span class="chip ok">已固化</span></td></tr>
+      <tr><td>诊断数据级别</td><td class="mono">AllowTelemetry = 0</td><td><span class="chip ok">已固化</span></td></tr>
+      <tr><td>清理动作</td><td>尚未执行 · 盘点 18,399 项待批</td><td><span class="chip">待阅片批注</span></td></tr>
+    </table>
+
+    <h2>历次摄片 · journal</h2>
+    <table>
+      <tr><th>时间</th><th>内容</th><th>状态</th></tr>
+      <tr><td class="mono">10-31 14:02</td><td>非管理员加固 13 值</td><td><span class="chip ok">可还原</span></td></tr>
+      <tr><td class="mono">10-31 22:35</td><td>提权加固 5 值 + DiagTrack 停止</td><td><span class="chip ok">可还原</span></td></tr>
+    </table>
+    <p class="note">本页数据为本机 2026-11-01 实测，非演示数据。所有破坏性动作需二次确认并先备份。</p>
+    <p class="foot">OpenSweep · 洁室实现，与 CCleaner/Gen Digital 无关 · 本页为三方向初稿之 B「阅片」，供选型</p>
+  </div>
+</body>
+</html>

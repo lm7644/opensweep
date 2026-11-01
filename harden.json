@@ -1,0 +1,166 @@
+[
+  {
+    "id": "privacy.advertisingid",
+    "name": "Advertising ID (targeted ads)",
+    "risk": "low",
+    "admin": false,
+    "set": [
+      {"key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
+       "value": "Enabled", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.applaunch",
+    "name": "App launch tracking (Start menu)",
+    "risk": "low",
+    "admin": false,
+    "set": [
+      {"key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+       "value": "Start_TrackProgs", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.tailored",
+    "name": "Tailored experiences (diagnostic data)",
+    "risk": "low",
+    "admin": false,
+    "set": [
+      {"key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Privacy",
+       "value": "TailoredExperiencesWithDiagnosticDataEnabled", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.onlinespeech",
+    "name": "Online speech recognition",
+    "risk": "low",
+    "admin": false,
+    "set": [
+      {"key": "HKCU\\Software\\Microsoft\\Speech_OneCore\\Settings\\OnlineSpeechPrivacy",
+       "value": "HasAccepted", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.inking",
+    "name": "Inking/typing personalization",
+    "risk": "low",
+    "admin": false,
+    "set": [
+      {"key": "HKCU\\Software\\Microsoft\\InputPersonalization",
+       "value": "RestrictImplicitInkCollection", "type": "REG_DWORD", "data": 1},
+      {"key": "HKCU\\Software\\Microsoft\\InputPersonalization",
+       "value": "RestrictImplicitTextCollection", "type": "REG_DWORD", "data": 1}
+    ]
+  },
+  {
+    "id": "privacy.inking.contacts",
+    "name": "Ink harvest contacts",
+    "risk": "low",
+    "admin": false,
+    "set": [
+      {"key": "HKCU\\Software\\Microsoft\\InputPersonalization\\TrainedDataStore",
+       "value": "HarvestContacts", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.start.suggestions",
+    "name": "Start menu suggestions",
+    "risk": "low",
+    "admin": false,
+    "set": [
+      {"key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+       "value": "SystemPaneSuggestionsEnabled", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.start.silentapps",
+    "name": "Silently installed suggested apps",
+    "risk": "low",
+    "admin": false,
+    "set": [
+      {"key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+       "value": "SilentInstalledAppsEnabled", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.start.softlanding",
+    "name": "Soft landing tips",
+    "risk": "low",
+    "admin": false,
+    "set": [
+      {"key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+       "value": "SoftLandingEnabled", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.start.subscribed",
+    "name": "Subscribed content (338388/89/93/96)",
+    "risk": "low",
+    "admin": false,
+    "set": [
+      {"key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+       "value": "SubscribedContent-338388Enabled", "type": "REG_DWORD", "data": 0},
+      {"key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+       "value": "SubscribedContent-338389Enabled", "type": "REG_DWORD", "data": 0},
+      {"key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+       "value": "SubscribedContent-338393Enabled", "type": "REG_DWORD", "data": 0},
+      {"key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+       "value": "SubscribedContent-338396Enabled", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.start.preinstalled",
+    "name": "Pre-installed (OEM/suggested) apps",
+    "risk": "low",
+    "admin": false,
+    "set": [
+      {"key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+       "value": "PreInstalledAppsEnabled", "type": "REG_DWORD", "data": 0},
+      {"key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+       "value": "OemPreInstalledAppsEnabled", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.activityfeed",
+    "name": "Activity history (timeline upload)",
+    "risk": "medium",
+    "admin": true,
+    "set": [
+      {"key": "HKCU\\Software\\Policies\\Microsoft\\Windows\\System",
+       "value": "EnableActivityFeed", "type": "REG_DWORD", "data": 0},
+      {"key": "HKCU\\Software\\Policies\\Microsoft\\Windows\\System",
+       "value": "PublishUserActivities", "type": "REG_DWORD", "data": 0},
+      {"key": "HKCU\\Software\\Policies\\Microsoft\\Windows\\System",
+       "value": "UploadUserActivities", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.feedback",
+    "name": "Feedback request frequency",
+    "risk": "low",
+    "admin": false,
+    "set": [
+      {"key": "HKCU\\Software\\Microsoft\\Siuf\\Rules",
+       "value": "NumberOfSIUFInPeriod", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.telemetry.level",
+    "name": "Diagnostic data level (AllowTelemetry)",
+    "risk": "medium",
+    "admin": true,
+    "set": [
+      {"key": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+       "value": "AllowTelemetry", "type": "REG_DWORD", "data": 0}
+    ]
+  },
+  {
+    "id": "privacy.diagtrack",
+    "name": "DiagTrack service (Connected User Experiences)",
+    "risk": "medium",
+    "admin": true,
+    "set": [
+      {"key": "HKLM\\SYSTEM\\CurrentControlSet\\Services\\DiagTrack",
+       "value": "Start", "type": "REG_DWORD", "data": 4}
+    ]
+  }
+]

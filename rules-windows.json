@@ -1,0 +1,812 @@
+[
+ {
+  "id": "win.recentdocs",
+  "category": "windows-traces",
+  "risk": "low",
+  "default": true,
+  "name": "Recent documents list",
+  "reg": [
+   {
+    "key": "HKCU\\software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RecentDocs",
+    "mode": "delete_key"
+   }
+  ]
+ },
+ {
+  "id": "win.runmru",
+  "category": "windows-traces",
+  "risk": "low",
+  "default": true,
+  "name": "Run dialog history (RunMRU)",
+  "reg": [
+   {
+    "key": "HKCU\\software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RunMRU",
+    "mode": "delete_key"
+   }
+  ]
+ },
+ {
+  "id": "win.typedpaths",
+  "category": "windows-traces",
+  "risk": "low",
+  "default": true,
+  "name": "Explorer address-bar history (TypedPaths)",
+  "reg": [
+   {
+    "key": "HKCU\\software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\TypedPaths",
+    "mode": "delete_key"
+   }
+  ]
+ },
+ {
+  "id": "win.wordwheel",
+  "category": "windows-traces",
+  "risk": "low",
+  "default": true,
+  "name": "Explorer search history (WordWheelQuery)",
+  "reg": [
+   {
+    "key": "HKCU\\software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\WordWheelQuery",
+    "mode": "delete_key"
+   }
+  ]
+ },
+ {
+  "id": "win.userassist",
+  "category": "windows-traces",
+  "risk": "low",
+  "default": true,
+  "name": "Program launch tracking (UserAssist)",
+  "reg": [
+   {
+    "key": "HKCU\\software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\UserAssist",
+    "mode": "values_tree"
+   }
+  ]
+ },
+ {
+  "id": "win.comdlg",
+  "category": "windows-traces",
+  "risk": "low",
+  "default": true,
+  "name": "Open/Save dialog MRU (ComDlg32)",
+  "reg": [
+   {
+    "key": "HKCU\\software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ComDlg32",
+    "mode": "delete_key"
+   }
+  ]
+ },
+ {
+  "id": "win.mapdrive",
+  "category": "windows-traces",
+  "risk": "low",
+  "default": true,
+  "name": "Map Network Drive MRU",
+  "reg": [
+   {
+    "key": "HKCU\\software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Map Network Drive MRU",
+    "mode": "delete_key"
+   }
+  ]
+ },
+ {
+  "id": "win.findcomputer",
+  "category": "windows-traces",
+  "risk": "low",
+  "default": true,
+  "name": "Find Computer MRU",
+  "reg": [
+   {
+    "key": "HKCU\\software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FindComputerMRU",
+    "mode": "delete_key"
+   }
+  ]
+ },
+ {
+  "id": "win.streams",
+  "category": "windows-traces",
+  "risk": "medium",
+  "default": false,
+  "name": "Explorer window layout caches (Streams/StreamMRU)",
+  "reg": [
+   {
+    "key": "HKCU\\software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Streams",
+    "mode": "delete_key"
+   },
+   {
+    "key": "HKCU\\software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StreamMRU",
+    "mode": "delete_key"
+   }
+  ]
+ },
+ {
+  "id": "win.traynotify",
+  "category": "windows-traces",
+  "risk": "medium",
+  "default": false,
+  "name": "Tray notification history (TrayNotify)",
+  "reg": [
+   {
+    "key": "HKCU\\software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\TrayNotify",
+    "mode": "values",
+    "values": [
+     "IconStreams",
+     "PastIconsStream"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "win.pshistory",
+  "category": "windows-traces",
+  "risk": "low",
+  "default": true,
+  "name": "PowerShell console history",
+  "files": [
+   {
+    "path": "%APPDATA%\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
+    "patterns": "*",
+    "recurse": false
+   }
+  ]
+ },
+ {
+  "id": "win.recentitems",
+  "category": "windows-traces",
+  "risk": "low",
+  "default": true,
+  "name": "Recent items shortcuts (.lnk)",
+  "files": [
+   {
+    "path": "%APPDATA%\\Microsoft\\Windows\\Recent",
+    "patterns": "*.lnk",
+    "recurse": false
+   }
+  ]
+ },
+ {
+  "id": "win.jumplists",
+  "category": "windows-traces",
+  "risk": "medium",
+  "default": false,
+  "name": "Taskbar jump lists (Automatic/Custom destinations)",
+  "files": [
+   {
+    "path": "%APPDATA%\\Microsoft\\Windows\\Recent\\AutomaticDestinations",
+    "patterns": "*.automaticDestinations-ms",
+    "recurse": false
+   },
+   {
+    "path": "%APPDATA%\\Microsoft\\Windows\\Recent\\CustomDestinations",
+    "patterns": "*.customDestinations-ms",
+    "recurse": false
+   }
+  ]
+ },
+ {
+  "id": "junk.temp.user",
+  "category": "windows-junk",
+  "risk": "low",
+  "default": true,
+  "name": "User temporary files (%TEMP%)",
+  "files": [
+   {
+    "path": "%TEMP%",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ },
+ {
+  "id": "junk.temp.system",
+  "category": "windows-junk",
+  "risk": "low",
+  "default": true,
+  "name": "System temporary files (C:\\Windows\\Temp)",
+  "files": [
+   {
+    "path": "%SystemRoot%\\Temp",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ },
+ {
+  "id": "junk.wer",
+  "category": "windows-junk",
+  "risk": "low",
+  "default": true,
+  "name": "Windows Error Reporting archives",
+  "files": [
+   {
+    "path": "%ALLUSERSPROFILE%\\Microsoft\\Windows\\WER\\ReportArchive",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%ALLUSERSPROFILE%\\Microsoft\\Windows\\WER\\ReportQueue",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Microsoft\\Windows\\WER\\ReportArchive",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Microsoft\\Windows\\WER\\ReportQueue",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ },
+ {
+  "id": "junk.crashdumps",
+  "category": "windows-junk",
+  "risk": "low",
+  "default": true,
+  "name": "Application crash dumps",
+  "files": [
+   {
+    "path": "%LOCALAPPDATA%\\CrashDumps",
+    "patterns": "*.dmp",
+    "recurse": false
+   }
+  ]
+ },
+ {
+  "id": "junk.thumbnails",
+  "category": "windows-junk",
+  "risk": "low",
+  "default": true,
+  "name": "Thumbnail/icon caches",
+  "files": [
+   {
+    "path": "%LOCALAPPDATA%\\Microsoft\\Windows\\Explorer",
+    "patterns": "thumbcache_*.db;iconcache_*.db",
+    "recurse": false
+   }
+  ]
+ },
+ {
+  "id": "junk.shadercache",
+  "category": "windows-junk",
+  "risk": "low",
+  "default": true,
+  "name": "DirectX shader cache",
+  "files": [
+   {
+    "path": "%LOCALAPPDATA%\\Microsoft\\DirectX Shader Cache",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ },
+ {
+  "id": "junk.widgets",
+  "category": "windows-junk",
+  "risk": "low",
+  "default": true,
+  "name": "Windows Widgets web-view caches",
+  "files": [
+   {
+    "path": "%LOCALAPPDATA%\\Packages\\MicrosoftWindows.Client.WebExperience_*\\LocalState\\EBWebView\\Cache",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Packages\\MicrosoftWindows.Client.WebExperience_*\\LocalState\\EBWebView\\Code Cache",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Packages\\MicrosoftWindows.Client.WebExperience_*\\LocalState\\EBWebView\\GPUCache",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ },
+ {
+  "id": "junk.dns",
+  "category": "windows-junk",
+  "risk": "low",
+  "default": true,
+  "name": "Flush DNS resolver cache",
+  "special": [
+   "flushdns"
+  ]
+ },
+ {
+  "id": "junk.recyclebin",
+  "category": "windows-junk",
+  "risk": "medium",
+  "default": false,
+  "name": "Empty Recycle Bin (ALL drives, no undo)",
+  "special": [
+   "recyclebin"
+  ]
+ },
+ {
+  "id": "app.winrar",
+  "category": "apps",
+  "risk": "low",
+  "default": true,
+  "name": "WinRAR archive history",
+  "reg": [
+   {
+    "key": "HKCU\\software\\WinRAR\\ArcHistory",
+    "mode": "values"
+   }
+  ]
+ },
+ {
+  "id": "app.7zip",
+  "category": "apps",
+  "risk": "low",
+  "default": true,
+  "name": "7-Zip archive/path history",
+  "reg": [
+   {
+    "key": "HKCU\\software\\7-Zip\\Compression\\ArcHistory",
+    "mode": "delete_key"
+   },
+   {
+    "key": "HKCU\\software\\7-Zip\\Extraction\\PathHistory",
+    "mode": "delete_key"
+   }
+  ]
+ },
+ {
+  "id": "app.office",
+  "category": "apps",
+  "risk": "low",
+  "default": true,
+  "name": "MS Office recent files",
+  "files": [
+   {
+    "path": "%APPDATA%\\Microsoft\\Office\\Recent",
+    "patterns": "*.lnk",
+    "recurse": false
+   }
+  ],
+  "reg": [
+   {
+    "key": "HKCU\\software\\Microsoft\\Office\\16.0\\Word\\FileMRUList",
+    "mode": "values"
+   },
+   {
+    "key": "HKCU\\software\\Microsoft\\Office\\16.0\\Excel\\FileMRUList",
+    "mode": "values"
+   },
+   {
+    "key": "HKCU\\software\\Microsoft\\Office\\16.0\\PowerPoint\\FileMRUList",
+    "mode": "values"
+   }
+  ]
+ },
+ {
+  "id": "app.acrobat",
+  "category": "apps",
+  "risk": "low",
+  "default": true,
+  "name": "Adobe Reader recent files",
+  "reg": [
+   {
+    "key": "HKCU\\software\\Adobe\\Acrobat Reader\\DC\\AVGeneral\\cRecentFiles",
+    "mode": "delete_key"
+   },
+   {
+    "key": "HKCU\\software\\Adobe\\Acrobat Reader\\DC\\AVGeneral\\cRecentFolders",
+    "mode": "delete_key"
+   }
+  ]
+ },
+ {
+  "id": "app.mpchc",
+  "category": "apps",
+  "risk": "low",
+  "default": true,
+  "name": "MPC-HC recent files",
+  "reg": [
+   {
+    "key": "HKCU\\software\\MPC-HC\\MPC-HC\\Recent File List",
+    "mode": "delete_key"
+   }
+  ]
+ },
+ {
+  "id": "browser.edge.cache",
+  "category": "browsers",
+  "risk": "low",
+  "default": true,
+  "name": "Edge cache",
+  "browser": "edge",
+  "needs_close": true,
+  "files": [
+   {
+    "path": "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\Cache",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\Code Cache",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\GPUCache",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\Service Worker\\CacheStorage",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\Service Worker\\ScriptCache",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ },
+ {
+  "id": "browser.edge.history",
+  "category": "browsers",
+  "risk": "low",
+  "default": true,
+  "name": "Edge history",
+  "browser": "edge",
+  "needs_close": true,
+  "files": [
+   {
+    "path": "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*",
+    "patterns": "History;History-journal;Visited Links;Top Sites;Shortcuts;Network Action Predictor",
+    "recurse": false
+   }
+  ]
+ },
+ {
+  "id": "browser.edge.cookies",
+  "category": "browsers",
+  "risk": "medium",
+  "default": true,
+  "name": "Edge cookies (SQLite row delete, whitelist-aware)",
+  "browser": "edge",
+  "needs_close": true,
+  "sqlite": [
+   {
+    "glob": "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\Network\\Cookies",
+    "tables": [
+     {
+      "table": "cookies",
+      "where": "KEEP"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "browser.edge.session",
+  "category": "browsers",
+  "risk": "medium",
+  "default": false,
+  "name": "Edge session restore data",
+  "browser": "edge",
+  "needs_close": true,
+  "files": [
+   {
+    "path": "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*",
+    "patterns": "Current Session;Last Session;Current Tabs;Last Tabs",
+    "recurse": false
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\Session Storage",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ },
+ {
+  "id": "browser.edge.autofill",
+  "category": "browsers",
+  "risk": "high",
+  "default": false,
+  "name": "Edge saved form information (autofill)",
+  "browser": "edge",
+  "needs_close": true,
+  "sqlite": [
+   {
+    "glob": "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\Web Data",
+    "tables": [
+     {
+      "table": "autofill"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "browser.chrome.cache",
+  "category": "browsers",
+  "risk": "low",
+  "default": true,
+  "name": "Chrome cache",
+  "browser": "chrome",
+  "needs_close": true,
+  "files": [
+   {
+    "path": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\Cache",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\Code Cache",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\GPUCache",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\Service Worker\\CacheStorage",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\Service Worker\\ScriptCache",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ },
+ {
+  "id": "browser.chrome.history",
+  "category": "browsers",
+  "risk": "low",
+  "default": true,
+  "name": "Chrome history",
+  "browser": "chrome",
+  "needs_close": true,
+  "files": [
+   {
+    "path": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*",
+    "patterns": "History;History-journal;Visited Links;Top Sites;Shortcuts;Network Action Predictor",
+    "recurse": false
+   }
+  ]
+ },
+ {
+  "id": "browser.chrome.cookies",
+  "category": "browsers",
+  "risk": "medium",
+  "default": true,
+  "name": "Chrome cookies (SQLite row delete, whitelist-aware)",
+  "browser": "chrome",
+  "needs_close": true,
+  "sqlite": [
+   {
+    "glob": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\Network\\Cookies",
+    "tables": [
+     {
+      "table": "cookies",
+      "where": "KEEP"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "browser.chrome.session",
+  "category": "browsers",
+  "risk": "medium",
+  "default": false,
+  "name": "Chrome session restore data",
+  "browser": "chrome",
+  "needs_close": true,
+  "files": [
+   {
+    "path": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*",
+    "patterns": "Current Session;Last Session;Current Tabs;Last Tabs",
+    "recurse": false
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\Session Storage",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ },
+ {
+  "id": "browser.chrome.autofill",
+  "category": "browsers",
+  "risk": "high",
+  "default": false,
+  "name": "Chrome saved form information (autofill)",
+  "browser": "chrome",
+  "needs_close": true,
+  "sqlite": [
+   {
+    "glob": "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\Web Data",
+    "tables": [
+     {
+      "table": "autofill"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "browser.firefox.cache",
+  "category": "browsers",
+  "risk": "low",
+  "default": true,
+  "name": "Firefox cache",
+  "browser": "firefox",
+  "needs_close": true,
+  "files": [
+   {
+    "path": "%APPDATA%\\Mozilla\\Firefox\\Profiles\\*\\cache2",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\Mozilla\\Firefox\\Profiles\\*\\startupCache",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ },
+ {
+  "id": "browser.firefox.history",
+  "category": "browsers",
+  "risk": "low",
+  "default": true,
+  "name": "Firefox history (rows kept for bookmarks)",
+  "browser": "firefox",
+  "needs_close": true,
+  "sqlite": [
+   {
+    "glob": "%APPDATA%\\Mozilla\\Firefox\\Profiles\\*\\places.sqlite",
+    "tables": [
+     {
+      "table": "moz_historyvisits"
+     },
+     {
+      "table": "moz_places",
+      "where": "id NOT IN (SELECT fk FROM moz_bookmarks WHERE fk IS NOT NULL)"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "browser.firefox.cookies",
+  "category": "browsers",
+  "risk": "medium",
+  "default": true,
+  "name": "Firefox cookies (SQLite row delete, whitelist-aware)",
+  "browser": "firefox",
+  "needs_close": true,
+  "sqlite": [
+   {
+    "glob": "%APPDATA%\\Mozilla\\Firefox\\Profiles\\*\\cookies.sqlite",
+    "tables": [
+     {
+      "table": "moz_cookies",
+      "where": "KEEP",
+      "col": "host"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "browser.firefox.autofill",
+  "category": "browsers",
+  "risk": "high",
+  "default": false,
+  "name": "Firefox saved form history",
+  "browser": "firefox",
+  "needs_close": true,
+  "sqlite": [
+   {
+    "glob": "%APPDATA%\\Mozilla\\Firefox\\Profiles\\*\\formhistory.sqlite",
+    "tables": [
+     {
+      "table": "moz_formhistory"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "app.qq.stemp",
+  "category": "apps",
+  "risk": "low",
+  "default": true,
+  "name": "QQ / QQNT temp folders (STemp)",
+  "files": [
+   {
+    "path": "%APPDATA%\\Tencent\\QQ\\STemp",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%APPDATA%\\Tencent\\QQNT\\STemp",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ },
+ {
+  "id": "app.wechat",
+  "category": "apps",
+  "risk": "low",
+  "default": true,
+  "name": "WeChat logs / crash / cdn cache (message DB never touched)",
+  "files": [
+   {
+    "path": "%APPDATA%\\Tencent\\WeChat\\log",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%APPDATA%\\Tencent\\WeChat\\crash",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%APPDATA%\\Tencent\\WeChat\\cdncomm",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ },
+ {
+  "id": "app.tencent.logs",
+  "category": "apps",
+  "risk": "low",
+  "default": true,
+  "name": "Tencent shared setup/diag logs",
+  "files": [
+   {
+    "path": "%APPDATA%\\Tencent\\Logs",
+    "patterns": "*.tlg;*.log",
+    "recurse": false
+   }
+  ]
+ },
+ {
+  "id": "app.doubao",
+  "category": "apps",
+  "risk": "low",
+  "default": true,
+  "name": "DoubaoWork crash/metrics/webview temp",
+  "files": [
+   {
+    "path": "%LOCALAPPDATA%\\DoubaoWork\\User Data\\Crashpad",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\DoubaoWork\\User Data\\BrowserMetrics",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\DoubaoWork\\User Data\\component_crx_cache",
+    "patterns": "*",
+    "recurse": true
+   },
+   {
+    "path": "%LOCALAPPDATA%\\DoubaoWork\\User Data\\ClipboardTemp",
+    "patterns": "*",
+    "recurse": true
+   }
+  ]
+ }
+]

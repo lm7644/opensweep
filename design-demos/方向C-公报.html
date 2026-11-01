@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenSweep · 公报方向（初稿C）</title>
+<style>
+  /* 方向C「公报」：细线报纸。白纸黑字 hairline 栏线，标题宋，数据黑体。
+     母题=本机安全公报/公告栏。信息密度高但层级严明。 */
+  :root{
+    --paper:#fafaf6; --ink:#17181a; --ink2:#57595e; --hair:#b9b9b2; --accent:#17181a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);
+    font:16px/1.62 "Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;padding:36px 0 72px}
+  .wrap{max-width:1024px;margin:0 auto;padding:0 28px}
+  .mast{border-top:4px solid var(--ink);border-bottom:1px solid var(--ink);
+    padding:14px 0 12px;display:flex;justify-content:space-between;align-items:baseline}
+  .mast h1{font-family:"Noto Serif SC","Songti SC",SimSun,serif;
+    font-size:clamp(1.8rem,1rem+2.6vw,2.8rem);letter-spacing:.14em;font-weight:700}
+  .mast .date{font-size:13px;color:var(--ink2)}
+  .cols{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:0;
+    border-bottom:1px solid var(--hair)}
+  .col{padding:18px 18px 22px 0}
+  .col+.col{border-left:1px solid var(--hair);padding-left:18px}
+  .col h3{font-family:"Noto Serif SC",SimSun,serif;font-size:19px;margin-bottom:10px;
+    text-wrap:balance}
+  .col p{font-size:14px;color:var(--ink2);max-width:36em}
+  .big{font-family:Consolas,monospace;font-size:44px;letter-spacing:-.02em;line-height:1.1;
+    margin:6px 0 2px}
+  .cap{font-size:13px;color:var(--ink2)}
+  dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px;margin-top:10px}
+  dt{color:var(--ink2)} dd{font-family:Consolas,monospace;text-align:right}
+  .rule{border:none;border-top:1px solid var(--hair);margin:26px 0 18px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;color:var(--ink2);font-weight:600;border-bottom:1px solid var(--ink);
+    padding:6px 8px}
+  td{padding:7px 8px;border-bottom:1px solid var(--hair)}
+  td.mono{font-family:Consolas,monospace}
+  .lead{font-size:17px;font-weight:600;max-width:36em;margin-bottom:14px}
+  .foot{margin-top:30px;border-top:1px solid var(--ink);padding-top:10px;
+    font-size:13px;color:var(--ink2);display:flex;justify-content:space-between}
+  @media (max-width:820px){.cols{grid-template-columns:1fr}.col+.col{border-left:none;padding-left:0;border-top:1px solid var(--hair)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mast">
+    <h1>本机隐私公报</h1>
+    <span class="date">OpenSweep 周报 · 第 2 期 · 2026 年 11 月 1 日 · 星期日</span>
+  </div>
+
+  <div class="cols">
+    <div class="col">
+      <h3>本机痕迹盘点</h3>
+      <div class="big">18,399</div>
+      <div class="cap">项 / 约 1.4 GB —— 仅盘点，未清理；清理需逐类确认并先备份</div>
+      <dl>
+        <dt>浏览器缓存</dt><dd>771 MB</dd>
+        <dt>用户临时文件</dt><dd>249 MB</dd>
+        <dt>崩溃转储</dt><dd>14 MB</dd>
+        <dt>跳转列表</dt><dd>549 项</dd>
+      </dl>
+    </div>
+    <div class="col">
+      <h3>隐私设置战报</h3>
+      <div class="big">15<span style="font-size:20px;color:var(--ink2)">/15</span></div>
+      <div class="cap">Windows 追踪开关全部固化；DiagTrack 服务已停用</div>
+      <table>
+        <tr><th>项目</th><th>状态</th></tr>
+        <tr><td>广告 ID</td><td class="mono">0</td></tr>
+        <tr><td>诊断数据</td><td class="mono">0</td></tr>
+        <tr><td>DiagTrack</td><td class="mono">Stopped</td></tr>
+        <tr><td>活动历史</td><td class="mono">0</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <h3>在册与在岗</h3>
+      <div class="big">103</div>
+      <div class="cap">自启动点 · 184 个已装软件 · 2 份未销账 journal</div>
+      <p style="margin-top:10px;font-size:14px;color:var(--ink2)">
+        本报由本机 OpenSweep 引擎于 127.0.0.1 本地生成，全程零外联；
+        深度管控交 Autoruns，卸载交 BCU，升级交 winget——本报只负责如实记账。</p>
+    </div>
+  </div>
+
+  <hr class="rule">
+  <p class="lead">社论：清理器不应当是它声称要清理的那种东西。</p>
+  <table>
+    <tr><th>历次操作（皆可还原）</th><th>时间</th><th>凭据</th></tr>
+    <tr><td>非管理员加固 13 值</td><td class="mono">10-31 14:02</td><td class="mono">journal-…140159</td></tr>
+    <tr><td>提权加固 5 值 · DiagTrack 停用</td><td class="mono">10-31 22:35</td><td class="mono">journal-…223530</td></tr>
+  </table>
+
+  <div class="foot">
+    <span>OpenSweep · 洁室实现，与 CCleaner/Gen Digital 无关</span>
+    <span>三方向初稿之 C「公报」，供选型</span>
+  </div>
+</div>
+</body>
+</html>

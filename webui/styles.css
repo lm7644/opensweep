@@ -1,0 +1,120 @@
+/* OpenSweep 账本 web UI —— 方向A 定稿。
+   tokens：暖纸×墨×朱砂；正文 16px/1.7（≥14px 底线）；对比 ≥4.5:1；
+   间距 8pt 网格；字族 ≤2（衬线 display + 无衬线正文，等宽仅数值）。 */
+:root{
+  --paper:#f2ede1; --paper2:#eae4d4; --ink:#211d17; --ink2:#47413a;
+  --hair:#c9c0ab; --hair2:#d8d1bf; --cinnabar:#a63a24; --ok:#4a6b3a;
+  --sel:#efe6cf;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);
+  font:16px/1.7 "Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+  text-wrap:pretty;padding:34px 0 70px}
+.wrap{max-width:920px;margin:0 auto;padding:0 26px}
+
+/* ---- 报头 ---- */
+.mast{border-bottom:3px double var(--ink);padding-bottom:14px;margin-bottom:10px}
+.mast-row{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+h1{font-family:Georgia,"Noto Serif SC","Songti SC",SimSun,serif;
+  font-size:clamp(2rem,1.2rem+3.2vw,3.2rem);font-weight:700;letter-spacing:.02em;
+  text-wrap:balance}
+.no{font-family:Georgia,"Noto Serif SC","Songti SC",SimSun,serif;font-size:15px;
+  color:var(--ink2);letter-spacing:.04em}
+.tagline{color:var(--ink2);font-size:14px;margin-top:4px}
+
+/* ---- 导航 ---- */
+.nav{display:flex;flex-wrap:wrap;gap:2px 18px;padding:8px 2px;position:sticky;top:0;
+  background:var(--paper);border-bottom:1px solid var(--hair);z-index:5}
+.nav a{color:var(--ink2);text-decoration:none;font-size:14px;padding:2px 0;
+  border-bottom:2px solid transparent}
+.nav a:hover{color:var(--cinnabar);border-bottom-color:var(--cinnabar)}
+
+/* ---- 章节 ---- */
+.sec{margin-top:40px}
+h2{font-family:Georgia,"Noto Serif SC","Songti SC",SimSun,serif;font-size:23px;
+  font-weight:700;margin:0 0 14px;border-bottom:1px solid var(--hair);
+  padding-bottom:7px;display:flex;align-items:baseline;gap:14px}
+h2 .sub{font-family:inherit;font-size:14px;font-weight:400;color:var(--ink2);
+  border:none;margin:0;padding:0}
+h3{font-family:Georgia,"Noto Serif SC",SimSun,serif;font-size:18px}
+
+/* ---- 台账表格 ---- */
+table.ledger{width:100%;border-collapse:collapse}
+.ledger td,.ledger th{padding:9px 8px;border-bottom:1px solid var(--hair);
+  vertical-align:baseline;text-align:left;font-size:15px}
+.ledger th{font-size:13px;color:var(--ink2);font-weight:600;
+  border-bottom:1px solid var(--ink)}
+.ledger .n{font-family:Consolas,monospace;text-align:right;white-space:nowrap}
+.ledger td.n{font-size:19px}
+.ledger .u{color:var(--ink2);font-size:13px;width:170px}
+.ledger .empty{color:var(--ink2);font-style:normal;font-size:14px;padding:16px 8px}
+.ledger tbody tr:hover{background:var(--sel)}
+.ledger input[type=checkbox]{accent-color:var(--cinnabar);width:15px;height:15px;cursor:pointer}
+
+/* ---- 印章 ---- */
+.stamp{display:inline-block;border:2px solid var(--cinnabar);color:var(--cinnabar);
+  font-family:"KaiTi","STKaiti","Noto Serif SC",SimSun,serif;font-weight:700;
+  font-size:14px;padding:1px 9px;transform:rotate(-4deg);border-radius:3px;
+  letter-spacing:.25em;white-space:nowrap}
+.stamp.done{border-color:var(--ok);color:var(--ok);transform:rotate(2deg)}
+h2 .stamp{font-size:13px}
+
+/* ---- 按钮：墨笔 / 印章 ---- */
+.btnrow{display:flex;gap:10px;align-items:center;margin:14px 0 10px;flex-wrap:wrap}
+button{cursor:pointer;border-radius:3px;transition:transform .12s ease, box-shadow .12s ease}
+button:active{transform:translateY(1px)}
+button.ink{background:var(--paper2);color:var(--ink);border:1px solid var(--ink);
+  font:600 15px/1 "Segoe UI","Microsoft YaHei",sans-serif;padding:9px 16px}
+button.ink:hover{background:var(--ink);color:var(--paper)}
+button.seal{background:transparent;color:var(--cinnabar);border:2px solid var(--cinnabar);
+  font-family:"KaiTi","STKaiti",serif;font-weight:700;font-size:16px;
+  letter-spacing:.2em;padding:7px 16px;transform:rotate(-1.5deg)}
+button.seal:hover:not(:disabled){background:var(--cinnabar);color:var(--paper);
+  transform:rotate(0)}
+button.seal:disabled{color:var(--ink2);border:1px dashed var(--hair);
+  background:transparent;cursor:not-allowed;transform:none;letter-spacing:.1em}
+button.seal.stamped{animation:stamp .38s cubic-bezier(.2,1.6,.4,1)}
+@keyframes stamp{0%{transform:scale(1.6) rotate(-8deg);opacity:0}
+  60%{transform:scale(.94) rotate(1deg);opacity:1}100%{transform:scale(1) rotate(-1.5deg)}}
+
+.paper-input{background:transparent;border:none;border-bottom:1px solid var(--ink2);
+  color:var(--ink);font:15px/1.6 "Segoe UI","Microsoft YaHei",sans-serif;padding:5px 2px;outline:none}
+.paper-input:focus{border-bottom-color:var(--cinnabar)}
+.hint{color:var(--ink2);font-size:14px}
+
+/* ---- 更新 pre ---- */
+.mono-block{background:var(--paper2);border:1px solid var(--hair);padding:14px;
+  font:13px/1.65 Consolas,"Courier New",monospace;overflow:auto;max-height:420px;
+  white-space:pre-wrap}
+
+/* ---- 确认对话框 ---- */
+dialog{background:var(--paper);color:var(--ink);border:1px solid var(--ink);
+  border-top:4px double var(--ink);padding:22px 24px;max-width:520px}
+dialog::backdrop{background:rgba(20,17,12,.45)}
+dialog h3{margin-bottom:10px}
+dialog p{font-size:15px;color:var(--ink2);margin-bottom:16px;white-space:pre-wrap}
+
+/* ---- 划销 / 完成层 ---- */
+#stamp-layer{position:fixed;inset:0;pointer-events:none;display:none;
+  align-items:center;justify-content:center;z-index:50}
+#stamp-layer.show{display:flex}
+#stamp-layer .stamp.big{font-size:88px;padding:10px 34px;letter-spacing:.4em;
+  animation:stamp .5s cubic-bezier(.2,1.6,.4,1)}
+
+/* ---- 一次编排式载入（唯一的大动效；响应式微动效留给交互） ---- */
+.reveal{opacity:0;transform:translateY(10px);animation:rise .5s ease forwards}
+.d1{animation-delay:.06s}.d2{animation-delay:.12s}.d3{animation-delay:.18s}
+.d4{animation-delay:.24s}.d5{animation-delay:.3s}.d6{animation-delay:.36s}
+.d7{animation-delay:.42s}.d8{animation-delay:.48s}.d9{animation-delay:.54s}
+.d10{animation-delay:.6s}
+@keyframes rise{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.reveal{animation:none;opacity:1;transform:none}}
+
+/* ---- 页脚 ---- */
+.foot{margin-top:56px;color:var(--ink2);font-size:13px;border-top:1px solid var(--hair);
+  padding-top:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+
+/* 状态色（少量、有语义） */
+.zero,.ok-text{color:var(--ok);font-weight:700}
+.warn-text{color:var(--cinnabar);font-weight:700}

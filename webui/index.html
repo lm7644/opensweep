@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenSweep 账本</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast reveal">
+    <div class="mast-row">
+      <h1>OpenSweep 账本</h1>
+      <span class="no" id="edition">No.20261101-v2.2</span>
+    </div>
+    <p class="tagline">零网络，默认只读，每一笔操作皆可划销——本机流水</p>
+  </header>
+
+  <nav class="nav reveal d1" id="nav">
+    <a href="#sec-health">台账</a><a href="#sec-clean">清理</a><a href="#sec-harden">隐私加固</a>
+    <a href="#sec-startup">启动项</a><a href="#sec-apps">已装软件</a><a href="#sec-updates">更新</a>
+    <a href="#sec-tools">组合工具</a><a href="#sec-undo">销账</a>
+  </nav>
+
+  <!-- 台账 -->
+  <section id="sec-health" class="sec reveal d2">
+    <h2>本机台账 <span class="stamp done" id="health-stamp" hidden>已 盘 点</span></h2>
+    <table class="ledger">
+      <tr><td>可清理痕迹（只读盘点，未动）</td><td class="n" id="k-scan-items">—</td><td class="u" id="k-scan-size">待扫描</td></tr>
+      <tr><td>Windows 隐私设置加固</td><td class="n" id="k-harden">—</td><td class="u">已固化 / 共 15 项</td></tr>
+      <tr><td>自启动点在册</td><td class="n" id="k-startup">—</td><td class="u">条（管控归 Autoruns）</td></tr>
+      <tr><td>已装软件在册</td><td class="n" id="k-apps">—</td><td class="u">个（卸载归 BCU）</td></tr>
+      <tr><td>未销账 journal</td><td class="n" id="k-journals">—</td><td class="u">份，均可还原</td></tr>
+      <tr><td>外联流量（自启动以来）</td><td class="n zero">0</td><td class="u">字节 · 家规第一条</td></tr>
+    </table>
+    <div class="btnrow">
+      <button class="ink" id="btn-health">刷新台账</button>
+      <span class="hint" id="health-note"></span>
+    </div>
+  </section>
+
+  <!-- 清理 -->
+  <section id="sec-clean" class="sec reveal d3">
+    <h2>清理 <span class="sub">勾选规则，逐类确认，先备份后动手</span></h2>
+    <div class="btnrow">
+      <button class="ink" id="btn-scan">只读扫描</button>
+      <button class="seal" id="btn-clean" disabled>清理选中</button>
+      <input id="keep" class="paper-input" placeholder="cookie 白名单，逗号分隔（可选）" size="30">
+    </div>
+    <table class="ledger rows" id="scan-table">
+      <thead><tr><th></th><th>规则</th><th class="n">条目</th><th class="n">体积</th><th>备注</th></tr></thead>
+      <tbody id="scan-body"><tr><td colspan="5" class="empty">尚未扫描——点「只读扫描」开始记账。</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- 加固 -->
+  <section id="sec-harden" class="sec reveal d4">
+    <h2>隐私加固 <span class="sub">15 项 Windows 追踪开关，修复前自动备份</span></h2>
+    <div class="btnrow">
+      <button class="ink" id="btn-harden-scan">刷新报告</button>
+      <button class="seal" id="btn-harden">应用加固（仅 exposed）</button>
+    </div>
+    <table class="ledger rows">
+      <thead><tr><th>状态</th><th>项目</th><th>当前值</th></tr></thead>
+      <tbody id="harden-body"><tr><td colspan="3" class="empty">读取中……</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- 启动项 -->
+  <section id="sec-startup" class="sec reveal d5">
+    <h2>启动项 <span class="sub">只读清单，深度管控请用 Autoruns</span></h2>
+    <div class="btnrow"><button class="ink" id="btn-startup">读取自启动清单</button></div>
+    <table class="ledger rows">
+      <thead><tr><th>类型</th><th>名称</th><th>命令</th></tr></thead>
+      <tbody id="startup-body"><tr><td colspan="3" class="empty">未读取。</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- 已装软件 -->
+  <section id="sec-apps" class="sec reveal d6">
+    <h2>已装软件 <span class="sub">只读清单，卸载请用 BCU 或系统设置</span></h2>
+    <div class="btnrow">
+      <button class="ink" id="btn-apps">列出全部</button>
+      <input id="app-q" class="paper-input" placeholder="搜索名称/发布者" size="24">
+    </div>
+    <table class="ledger rows">
+      <thead><tr><th>名称</th><th>版本</th><th>发布者</th></tr></thead>
+      <tbody id="apps-body"><tr><td colspan="3" class="empty">未读取。</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- 更新 -->
+  <section id="sec-updates" class="sec reveal d7">
+    <h2>软件更新 <span class="sub">winget 只读列出，升级自行确认执行</span></h2>
+    <div class="btnrow"><button class="ink" id="btn-updates">查询待升级</button></div>
+    <pre class="mono-block" id="updates-pre">（未查询）</pre>
+  </section>
+
+  <!-- 组合工具 -->
+  <section id="sec-tools" class="sec reveal d8">
+    <h2>组合工具 <span class="sub">清理交给本账本，其余交给生态</span></h2>
+    <div class="btnrow"><button class="ink" id="btn-tools">检测伴生工具</button></div>
+    <table class="ledger rows">
+      <thead><tr><th>在</th><th>工具</th><th>用途</th><th>用法</th></tr></thead>
+      <tbody id="tools-body"><tr><td colspan="4" class="empty">未检测。</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- 销账 -->
+  <section id="sec-undo" class="sec reveal d9">
+    <h2>销账 <span class="sub">每一份 journal 均可逆序还原</span></h2>
+    <table class="ledger rows">
+      <thead><tr><th></th><th>journal</th><th class="n">写入时间</th><th class="n">大小</th></tr></thead>
+      <tbody id="undo-body"><tr><td colspan="4" class="empty">读取中……</td></tr></tbody>
+    </table>
+    <div class="btnrow">
+      <button class="seal" id="btn-undo" disabled>划销（还原选中 journal）</button>
+      <span class="hint" id="undo-hint"></span>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>OpenSweep，洁室实现，与 CCleaner/Gen Digital 无关，本页数据全部来自本机引擎</span>
+    <span id="foot-right">账本方向 A，定稿实现</span>
+  </footer>
+</div>
+
+<dialog id="confirm">
+  <h3 id="confirm-title">确认</h3>
+  <p id="confirm-body"></p>
+  <div class="btnrow" style="justify-content:flex-end">
+    <button class="ink" id="confirm-no">取消</button>
+    <button class="seal" id="confirm-yes">用印确认</button>
+  </div>
+</dialog>
+
+<div id="stamp-layer"><div class="stamp big" id="stamp-fly">讫</div></div>
+<script src="app.js"></script>
+</body>
+</html>

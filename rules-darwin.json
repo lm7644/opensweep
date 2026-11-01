@@ -1,0 +1,96 @@
+[
+  {
+    "id": "mac.browser.chrome.cache", "category": "browsers", "risk": "low",
+    "default": true, "name": "Chrome cache (macOS)", "browser": "chrome",
+    "needs_close": true,
+    "files": [
+      {"path": "${HOME}/Library/Application Support/Google/Chrome/*/Cache", "patterns": "*", "recurse": true},
+      {"path": "${HOME}/Library/Application Support/Google/Chrome/*/Code Cache", "patterns": "*", "recurse": true},
+      {"path": "${HOME}/Library/Application Support/Google/Chrome/*/GPUCache", "patterns": "*", "recurse": true},
+      {"path": "${HOME}/Library/Application Support/Google/Chrome/*/Service Worker/CacheStorage", "patterns": "*", "recurse": true},
+      {"path": "${HOME}/Library/Application Support/Google/Chrome/*/Service Worker/ScriptCache", "patterns": "*", "recurse": true}
+    ]
+  },
+  {
+    "id": "mac.browser.chrome.history", "category": "browsers", "risk": "low",
+    "default": true, "name": "Chrome history (macOS)", "browser": "chrome",
+    "needs_close": true,
+    "files": [
+      {"path": "${HOME}/Library/Application Support/Google/Chrome/*", "patterns": "History;History-journal;Visited Links;Top Sites;Shortcuts;Network Action Predictor", "recurse": false}
+    ]
+  },
+  {
+    "id": "mac.browser.chrome.cookies", "category": "browsers", "risk": "medium",
+    "default": true, "name": "Chrome cookies (macOS, row delete, whitelist-aware)",
+    "browser": "chrome", "needs_close": true,
+    "sqlite": [
+      {"glob": "${HOME}/Library/Application Support/Google/Chrome/*/Network/Cookies",
+       "tables": [{"table": "cookies", "where": "KEEP"}]}
+    ]
+  },
+  {
+    "id": "mac.browser.edge.cache", "category": "browsers", "risk": "low",
+    "default": true, "name": "Edge cache (macOS)", "browser": "edge",
+    "needs_close": true,
+    "files": [
+      {"path": "${HOME}/Library/Application Support/Microsoft Edge/*/Cache", "patterns": "*", "recurse": true},
+      {"path": "${HOME}/Library/Application Support/Microsoft Edge/*/Code Cache", "patterns": "*", "recurse": true},
+      {"path": "${HOME}/Library/Application Support/Microsoft Edge/*/GPUCache", "patterns": "*", "recurse": true}
+    ]
+  },
+  {
+    "id": "mac.browser.edge.cookies", "category": "browsers", "risk": "medium",
+    "default": true, "name": "Edge cookies (macOS, row delete, whitelist-aware)",
+    "browser": "edge", "needs_close": true,
+    "sqlite": [
+      {"glob": "${HOME}/Library/Application Support/Microsoft Edge/*/Network/Cookies",
+       "tables": [{"table": "cookies", "where": "KEEP"}]}
+    ]
+  },
+  {
+    "id": "mac.browser.firefox.cache", "category": "browsers", "risk": "low",
+    "default": true, "name": "Firefox cache (macOS)", "browser": "firefox",
+    "needs_close": true,
+    "files": [
+      {"path": "${HOME}/Library/Caches/Firefox/Profiles/*/cache2", "patterns": "*", "recurse": true},
+      {"path": "${HOME}/Library/Caches/Firefox/Profiles/*/startupCache", "patterns": "*", "recurse": true}
+    ]
+  },
+  {
+    "id": "mac.browser.firefox.cookies", "category": "browsers", "risk": "medium",
+    "default": true, "name": "Firefox cookies (macOS, row delete, whitelist-aware)",
+    "browser": "firefox", "needs_close": true,
+    "sqlite": [
+      {"glob": "${HOME}/Library/Application Support/Firefox/Profiles/*/cookies.sqlite",
+       "tables": [{"table": "moz_cookies", "where": "KEEP", "col": "host"}]}
+    ]
+  },
+  {
+    "id": "mac.browser.safari.cache", "category": "browsers", "risk": "low",
+    "default": true, "name": "Safari caches (macOS)", "browser": "safari",
+    "needs_close": true,
+    "files": [
+      {"path": "${HOME}/Library/Caches/com.apple.Safari", "patterns": "*", "recurse": true},
+      {"path": "${HOME}/Library/Caches/com.apple.Safari.SafeBrowsing", "patterns": "*", "recurse": true}
+    ]
+  },
+  {
+    "id": "mac.logs.user", "category": "windows-junk", "risk": "low",
+    "default": true, "name": "User application logs (~/Library/Logs)",
+    "files": [
+      {"path": "${HOME}/Library/Logs", "patterns": "*.log;*.ips", "recurse": true}
+    ]
+  },
+  {
+    "id": "mac.crashreports", "category": "windows-junk", "risk": "low",
+    "default": true, "name": "Crash reports (DiagnosticReports / CrashReporter)",
+    "files": [
+      {"path": "${HOME}/Library/Logs/DiagnosticReports", "patterns": "*.ips;*.crash", "recurse": false},
+      {"path": "${HOME}/Library/Application Support/CrashReporter", "patterns": "*", "recurse": true}
+    ]
+  },
+  {
+    "id": "mac.dns", "category": "windows-junk", "risk": "low",
+    "default": true, "name": "Flush DNS cache (mDNSResponder)", "special": ["flushdns"]
+  }
+]
