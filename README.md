@@ -5,7 +5,9 @@
 <a id="中文"></a>
 ## 中文
 
-Windows / macOS 隐私痕迹清理工具（洁室实现）。**零依赖**（仅 Python 3.10+ 标准库）、**零网络**（无任何出站连接；winget 仅在更新页显式调用）、**默认只读**、**全操作可撤销**（journal 机制）、**凭据库全规则不可见**。
+Windows / macOS 隐私痕迹清理工具（**v3.1**，洁室实现）。**零依赖**（仅 Python 3.10+ 标准库）、**零网络**（无任何出站连接；winget 仅在更新页显式调用）、**默认只读**、**全操作可撤销**（journal 机制）、**凭据库全规则不可见**。
+
+v3.1 新增：`report`（自包含 HTML 审计报告）、`dupes`（重复文件只读快查）、`apply --restore-point`（清理前系统还原点）、macOS `$TMPDIR` 按年龄清理规则（≥3 天）。
 
 三种前端：CLI（`opensweep.py`）/ 暗色桌面 GUI（`gui.py`）/ 账本风本地 Web UI（`server.py` → http://127.0.0.1）。规则库为声明式 JSON（`rules-windows.json` / `rules-darwin.json` / `harden.json`），按平台加载。
 
