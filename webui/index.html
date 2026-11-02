@@ -20,7 +20,7 @@
   <nav class="nav reveal d1" id="nav">
     <a href="#sec-health">台账</a><a href="#sec-clean">清理</a><a href="#sec-harden">隐私加固</a>
     <a href="#sec-startup">启动项</a><a href="#sec-apps">已装软件</a><a href="#sec-updates">更新</a>
-    <a href="#sec-tools">组合工具</a><a href="#sec-undo">销账</a>
+    <a href="#sec-dupes">重复快查</a><a href="#sec-tools">组合工具</a><a href="#sec-undo">销账</a>
   </nav>
 
   <!-- 台账 -->
@@ -47,6 +47,9 @@
       <button class="ink" id="btn-scan">只读扫描</button>
       <button class="seal" id="btn-clean" disabled>清理选中</button>
       <input id="keep" class="paper-input" placeholder="cookie 白名单，逗号分隔（可选）" size="30">
+      <label id="rp-label" style="display:none;font-size:14px">
+        <input type="checkbox" id="rp-check"> 先建系统还原点（Windows）
+      </label>
     </div>
     <table class="ledger rows" id="scan-table">
       <thead><tr><th></th><th>规则</th><th class="n">条目</th><th class="n">体积</th><th>备注</th></tr></thead>
@@ -95,6 +98,20 @@
     <h2>软件更新 <span class="sub">winget 只读列出，升级自行确认执行</span></h2>
     <div class="btnrow"><button class="ink" id="btn-updates">查询待升级</button></div>
     <pre class="mono-block" id="updates-pre">（未查询）</pre>
+  </section>
+
+  <!-- 重复快查 -->
+  <section id="sec-dupes" class="sec reveal">
+    <h2>重复快查 <span class="sub">只读 · 内容哈希比对 · 去重请用 dupeGuru</span></h2>
+    <div class="btnrow">
+      <input id="dupes-dir" class="paper-input" placeholder="扫描目录，如 D:\Downloads" size="34">
+      <input id="dupes-min" class="paper-input" placeholder="≥MB" value="10" size="5">
+      <button class="ink" id="btn-dupes">查找重复</button>
+    </div>
+    <table class="ledger rows">
+      <thead><tr><th class="n">份数</th><th class="n">单份</th><th class="n">浪费</th><th>文件</th></tr></thead>
+      <tbody id="dupes-body"><tr><td colspan="4" class="empty">未扫描。</td></tr></tbody>
+    </table>
   </section>
 
   <!-- 组合工具 -->

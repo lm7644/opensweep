@@ -12,6 +12,7 @@ import os
 import shutil
 import sqlite3
 import sys
+import time
 from pathlib import Path
 
 TESTS = Path(__file__).resolve().parent
@@ -35,6 +36,7 @@ sys.path.insert(0, str(ROOT))
 import opensweep as engine  # noqa: E402
 
 IS_WIN = engine.IS_WIN
+IS_MAC = engine.IS_MAC
 RESULTS = []
 
 def check(name, good, detail=""):
@@ -48,11 +50,12 @@ def sha(p):
             h.update(b)
     return h.hexdigest()
 
-def put(rel, name, tag=b""):
+def put(rel, name, size=64, tag=b""):
     p = SB / rel
     p.mkdir(parents=True, exist_ok=True)
     f = p / name
-    f.write_bytes(tag + b"OPENSWEEP-FIXTURE-" + name.encode("utf-8"))
+    f.write_bytes(tag + b"OPENSWEEP-FIXTURE-"
+                  + name.encode("utf-8") * max(1, size // 32))
     return f
 
 PROTECTED, JUNK_EXPECT = {}, {}
@@ -224,6 +227,62 @@ def cookie_test():
           all((SB / rel).exists() for rel in PROTECTED if "login data" in rel.lower()
               or "bookmarks" in rel.lower()))
 
+def tmpdir_age_test():
+    """mac: the $TMPDIR rule only removes files older than 3 days."""
+    if not IS_MAC:
+        return
+    print("\n== $TMPDIR age-based cleaning (mac) ==")
+    rule = next((r for r in engine.RULES if r["id"] == "mac.temp.tmpdir"), None)
+    if not rule:
+        check("tmpdir rule present in rules-darwin.json", False)
+        return
+    spec = rule["files"][0]
+    tmp = Path(os.path.expandvars(spec["path"]))
+    tmp.mkdir(parents=True, exist_ok=True)
+    old = tmp / "stale_opensweep_test.tmp"
+    fresh = tmp / "fresh_opensweep_test.tmp"
+    old.write_bytes(b"OLD-JUNK"); fresh.write_bytes(b"FRESH-KEEP")
+    three_days_ago = time.time() - 3 * 86400 - 3600
+    os.utime(old, (three_days_ago, three_days_ago))
+    jr = engine.Journal()
+    engine.apply_rule(rule, set(), [], jr, dry=False)
+    check("tmpdir: stale file removed", not old.exists())
+    check("tmpdir: fresh file untouched (age filter works)", fresh.exists())
+    fresh.unlink()
+    engine.undo_journal(jr.save())
+    check("tmpdir: stale file restored by undo", old.exists())
+    old.unlink()
+
+def dupes_test():
+    print("\n== duplicate quick-scan (read-only) ==")
+    d = SB / "DupZone"
+    d.mkdir(parents=True, exist_ok=True)
+    import secrets
+    a = d / "dup_a.bin"
+    b = d / "dup_b.bin"
+    a.write_bytes(b"DUPDATA-" + secrets.token_bytes(300))
+    b.write_bytes(a.read_bytes())          # byte-identical pair
+    (d / "unique.bin").write_bytes(b"UNIQUE-" + secrets.token_bytes(300))
+    groups = engine.dup_scan(str(d), min_mb=0.0001)
+    found = next((g for g in (groups or []) if len(g["files"]) == 2
+                  and g["files"][0].endswith("dup_a.bin")), None)
+    check("dupes: identical pair detected as one group", found is not None,
+          f"groups={len(groups or [])}")
+    check("dupes: unique file not flagged",
+          found is not None and all("unique" not in f for f in found["files"]))
+    check("dupes: read-only (sandbox untouched)", a.exists() and b.exists())
+    shutil.rmtree(d, ignore_errors=True)
+
+def restore_point_test():
+    print("\n== restore point (Windows, graceful off-admin) ==")
+    if not IS_WIN:
+        print("  (Windows-only feature)")
+        return
+    ok, note = engine.create_restore_point("OpenSweep CI check")
+    # on non-admin CI it must fail gracefully with a note, never crash
+    check("restore point: graceful (ok or honest note)", isinstance(note, str),
+          f"ok={ok} note={note[:60]}")
+
 def browser_guard_test():
     print("\n== browser running guard ==")
     try:
@@ -335,6 +394,9 @@ def main():
     browser_guard_test()
     neutral_zone()
     registry_fixture_tests()
+    tmpdir_age_test()
+    dupes_test()
+    restore_point_test()
 
     print("\n" + "=" * 56)
     passed = sum(1 for _, okk, _ in RESULTS if okk)

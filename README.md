@@ -17,9 +17,12 @@ Windows / macOS 隐私痕迹清理工具（洁室实现）。**零依赖**（仅
 python opensweep.py rules          # 规则清单
 python opensweep.py scan           # 只读扫描
 python opensweep.py apply          # 干跑（默认）；--yes 执行；--undo 可还原
+python opensweep.py apply --restore-point --yes   # 清理前先建系统还原点（Windows，需管理员）
 python opensweep.py harden         # Windows 隐私设置加固报告（--yes 应用）
 python opensweep.py startup|apps   # 只读清单（启动项 / 已装软件）
 python opensweep.py updates        # winget 待升级列表（Windows）
+python opensweep.py dupes <dir>    # 重复文件快查（只读，≥10MB 内容哈希）
+python opensweep.py report         # 自包含 HTML 审计报告（账本风格）
 python server.py                   # 账本 Web UI（打印带 token 的本地地址）
 python gui.py                      # 桌面 GUI
 python tests/test_suite.py         # 沙箱安全测试（清单哈希 + 多轮 apply/undo）

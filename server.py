@@ -79,7 +79,17 @@ class Handler(BaseHTTPRequestHandler):
                          if engine.UNDO_ROOT.exists() else 0)
                     self._json({"harden": {"hardened": nh, "exposed": ne, "admin": na},
                                 "journals": n, "rules": len(engine.RULES),
-                                "admin": engine.is_admin()})
+                                "admin": engine.is_admin(),
+                                "platform": sys.platform})
+                elif name == "dupes":
+                    q = parse_qs(u.query)
+                    d = q.get("dir", [""])[0]
+                    mb = float(q.get("min", ["10"])[0] or 10)
+                    groups = engine.dup_scan(d, mb)
+                    if groups is None:
+                        self._json({"error": "directory not found"}, 400)
+                        return
+                    self._json({"groups": groups[:200]})
                 else:
                     self._json({"error": "unknown endpoint"}, 404)
             except Exception as e:
@@ -124,12 +134,16 @@ class Handler(BaseHTTPRequestHandler):
                 keep = [d.strip().lower() for d in payload.get("keep", []) if d.strip()]
                 running = engine.running_exes()
                 jr = engine.Journal()
+                rp_note = None
+                if payload.get("restore_point"):
+                    rp_ok, rp_note = engine.create_restore_point("OpenSweep pre-clean")
                 out = []
                 for rid in ids:
                     rule = next((r for r in engine.RULES if r["id"] == rid), None)
                     if rule:
                         out.append(engine.apply_rule(rule, running, keep, jr, dry=False))
-                self._json({"results": out, "journal": jr.save().name})
+                self._json({"results": out, "journal": jr.save().name,
+                            "restore_point": rp_note})
             elif name == "harden":
                 if not payload.get("confirm"):
                     self._json({"error": "confirm required"}, 400)

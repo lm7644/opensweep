@@ -92,5 +92,13 @@
   {
     "id": "mac.dns", "category": "windows-junk", "risk": "low",
     "default": true, "name": "Flush DNS cache (mDNSResponder)", "special": ["flushdns"]
+  },
+  {
+    "id": "mac.temp.tmpdir", "category": "windows-junk", "risk": "low",
+    "default": true,
+    "name": "Stale user temp files ($TMPDIR, older than 3 days)",
+    "files": [
+      {"path": "${TMPDIR}", "patterns": "*", "recurse": true, "min_age_days": 3}
+    ]
   }
 ]

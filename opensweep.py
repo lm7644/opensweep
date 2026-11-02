@@ -37,6 +37,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 IS_WIN = sys.platform == "win32"
@@ -46,7 +47,7 @@ if IS_WIN:
 else:  # registry layer is Windows-only; macOS uses the file/sqlite ruleset
     winreg = None
 
-TOOL = "OpenSweep v3.0-oss"
+TOOL = "OpenSweep v3.1"
 UNDO_ROOT = Path(os.environ.get("TEMP", r"C:\Temp")) / "OpenSweepUndo"
 
 # --------------------------------------------------------------------------
@@ -214,6 +215,8 @@ def iter_file_candidates(spec):
     """Yield candidate files for a files-spec. Handles file-type bases (the
     path itself IS the target), never returns anything inside the undo area
     (self-contamination guard), and never returns credential/bookmark stores."""
+    min_age = spec.get("min_age_days")
+    cutoff = (time.time() - float(min_age) * 86400) if min_age else None
     for base in glob_resolve(spec["path"]):
         pats = [p.strip() for p in spec["patterns"].split(";") if p.strip()]
         if base.is_file():
@@ -229,6 +232,12 @@ def iter_file_candidates(spec):
                         continue
                     if f.is_file() and f.name.lower() in PROTECTED_NAMES:
                         continue
+                    if cutoff is not None:
+                        try:
+                            if f.stat().st_mtime > cutoff:
+                                continue   # too young for this rule
+                        except OSError:
+                            continue
                     yield f
             except OSError:
                 continue
@@ -855,6 +864,123 @@ def winget_upgrades():
     return lines if lines else ["(no pending upgrades or empty output)"]
 
 # --------------------------------------------------------------------------
+# P4 restore point (Windows) / P5 duplicate quick-scan (read-only) / P3 report
+# --------------------------------------------------------------------------
+
+def create_restore_point(description="OpenSweep"):
+    """Create a Windows system restore point. Admin required; subject to the
+    OS 24h creation throttle. Returns (ok, note)."""
+    if not IS_WIN:
+        return False, "restore points are Windows-only"
+    try:
+        r = subprocess.run(
+            ["powershell", "-NoProfile", "-Command",
+             f"Checkpoint-Computer -Description '{description}' "
+             "-RestorePointType MODIFY_SETTINGS"],
+            capture_output=True, text=True, timeout=600)
+        if r.returncode == 0:
+            return True, "restore point requested (OS may throttle to one per 24h)"
+        return False, (r.stderr.strip()[:140]
+                       or "requires administrator / System Restore enabled")
+    except Exception as e:
+        return False, str(e)[:140]
+
+def _sha_file(p):
+    h = hashlib.sha256()
+    try:
+        with open(p, "rb") as f:
+            for b in iter(lambda: f.read(1 << 16), b""):
+                h.update(b)
+        return h.hexdigest()
+    except OSError:
+        return None
+
+def dup_scan(root, min_mb=10.0):
+    """Read-only duplicate quick-scan: size pre-filter then content hash.
+    Returns groups sorted by wasted bytes. Never mutates anything."""
+    rootp = Path(root)
+    if not rootp.is_dir():
+        return None
+    min_size = int(min_mb * 1024 * 1024)
+    by_size = {}
+    for f in rootp.rglob("*"):
+        try:
+            if f.is_file():
+                sz = f.stat().st_size
+                if sz >= min_size:
+                    by_size.setdefault(sz, []).append(f)
+        except OSError:
+            continue
+    groups = []
+    for sz, fl in by_size.items():
+        if len(fl) < 2:
+            continue
+        by_hash = {}
+        for f in fl:
+            h = _sha_file(f)
+            if h:
+                by_hash.setdefault(h, []).append(str(f))
+        for h, lst in by_hash.items():
+            if len(lst) > 1:
+                groups.append({"sha": h[:12], "size": sz, "count": len(lst),
+                               "wasted": sz * (len(lst) - 1), "files": lst})
+    groups.sort(key=lambda g: -g["wasted"])
+    return groups
+
+def report_html(out_path):
+    """Generate a self-contained ledger-style audit report (read-only data)."""
+    running = running_exes()
+    scan = [scan_rule(r, running, []) for r in RULES]
+    total_items = sum(o["items"] for o in scan)
+    total_bytes = sum(o["bytes"] for o in scan)
+    harden = harden_report()
+    nh = sum(1 for r in harden if r["status"] == "hardened")
+    ne = sum(1 for r in harden if r["status"] == "exposed")
+    na = sum(1 for r in harden if r["status"] == "admin-required")
+    journals = (sorted(UNDO_ROOT.glob("journal-*.json"))
+                if UNDO_ROOT.exists() else [])
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    rows = "\n".join(
+        f'<tr><td>{o["id"]}</td><td class="n">{o["items"]:,}</td>'
+        f'<td class="n">{human(o["bytes"])}</td>'
+        f'<td style="font-size:13px;color:var(--ink2)">'
+        f'{o["notes"][0] if o["notes"] else ""}</td></tr>'
+        for o in scan if o["items"] or o["notes"])
+    hrows = "\n".join(
+        f'<tr><td>{r["id"]}</td><td>{r["status"]}</td></tr>' for r in harden)
+    html = f"""<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>OpenSweep 审计报告 {now}</title><style>
+body{{background:#f2ede1;color:#211d17;font:16px/1.7 "Segoe UI","Microsoft YaHei",sans-serif;
+padding:40px 0;max-width:920px;margin:0 auto}}
+h1{{font-family:Georgia,"Noto Serif SC",SimSun,serif;font-size:2.4rem}}
+h2{{font-family:Georgia,"Noto Serif SC",SimSun,serif;font-size:22px;
+border-bottom:1px solid #c9c0ab;padding-bottom:6px;margin:36px 0 12px}}
+table{{width:100%;border-collapse:collapse}}
+td,th{{padding:8px;border-bottom:1px solid #c9c0ab;text-align:left;font-size:15px}}
+th{{font-size:13px;color:#47413a}}
+.n{{font-family:Consolas,monospace;text-align:right}}
+.mast{{border-bottom:3px double #211d17;padding-bottom:12px;margin-bottom:8px}}
+.foot{{margin-top:48px;color:#47413a;font-size:13px;border-top:1px solid #c9c0ab;padding-top:10px}}
+</style></head><body>
+<div class="mast"><h1>OpenSweep 审计报告</h1>
+<p style="color:#47413a">{now} · {TOOL} · 零网络 · {len(RULES)} 条规则 · 平台 {sys.platform}</p></div>
+<h2>痕迹盘点（只读）</h2>
+<table><tr><th>合计</th><th class="n">{total_items:,} 项</th><th class="n">{human(total_bytes)}</th></tr></table>
+<h2>逐规则台账</h2>
+<table><tr><th>规则</th><th class="n">条目</th><th class="n">体积</th><th>备注</th></tr>
+{rows}</table>
+<h2>Windows 隐私加固状态</h2>
+<table><tr><th>已加固 {nh}</th><th>暴露 {ne}</th><th>需管理员 {na}</th></tr>
+{hrows}</table>
+<h2>撤销区</h2>
+<table><tr><th>未销账 journal</th><td class="n">{len(journals)}</td></tr>
+<tr><th>可还原操作</th><td>全部</td></tr></table>
+<div class="foot">OpenSweep 洁室实现，与 CCleaner/Gen Digital 无关 · 本报告由本机引擎生成，零外联</div>
+</body></html>"""
+    Path(out_path).write_text(html, encoding="utf-8")
+    return out_path
+
+# --------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------
 
@@ -870,6 +996,8 @@ def main():
         if name == "apply":
             s.add_argument("--all", action="store_true", help="include non-default (risky) rules")
             s.add_argument("--yes", action="store_true", help="actually mutate (default: dry-run)")
+            s.add_argument("--restore-point", action="store_true",
+                           help="request a Windows restore point before cleaning (admin)")
             s.add_argument("--keep-cookies", default="",
                            help="comma-separated domains to keep cookies for")
     u = sub.add_parser("undo")
@@ -882,6 +1010,11 @@ def main():
     sub.add_parser("startup", help="autostart inventory (read-only; manage with Autoruns)")
     sub.add_parser("apps", help="installed apps inventory (read-only; uninstall via BCU/Settings)")
     sub.add_parser("updates", help="pending updates via winget (read-only listing)")
+    dp = sub.add_parser("dupes", help="duplicate file quick-scan (read-only)")
+    dp.add_argument("dir", help="directory to scan")
+    dp.add_argument("--min-mb", type=float, default=10.0)
+    rp = sub.add_parser("report", help="self-contained HTML audit report (read-only)")
+    rp.add_argument("--out", default=None, help="output html path")
     args = ap.parse_args()
 
     if args.cmd == "undo":
@@ -942,6 +1075,23 @@ def main():
         for line in winget_upgrades():
             log("  " + line[:130])
         return
+    if args.cmd == "dupes":
+        log(f"{TOOL} - duplicate quick-scan (read-only) in {args.dir} "
+            f"(>= {args.min_mb} MB)")
+        groups = dup_scan(args.dir, args.min_mb)
+        if groups is None:
+            log("  directory not found"); return
+        for g in groups[:50]:
+            log(f'  {g["count"]}x {human(g["size"]):>10}  waste {human(g["wasted"]):>10}  '
+                f'{g["files"][0]}')
+        log(f"\n  {len(groups)} duplicate groups (read-only; dedupe with dupeGuru)")
+        return
+    if args.cmd == "report":
+        out = args.out or f"OpenSweepReport-{datetime.datetime.now().strftime('%Y%m%d-%H%M')}.html"
+        log(f"{TOOL} - generating audit report (read-only scan) ...")
+        p = report_html(os.path.abspath(out))
+        log(f"  report written: {p}")
+        return
 
     sel = [r for r in RULES
            if (not args.category or r["category"] == args.category)
@@ -986,6 +1136,9 @@ def main():
         return
 
     journal = Journal()
+    if getattr(args, "restore_point", False):
+        ok, note = create_restore_point("OpenSweep pre-clean")
+        log(f"  restore point: {'OK' if ok else 'SKIPPED'} ({note})")
     log(f"applying {len(sel2)} rules; journal -> {journal.path}")
     for r in sel2:
         res = apply_rule(r, running, keep, journal, dry=False)

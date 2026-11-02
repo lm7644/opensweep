@@ -106,12 +106,15 @@ async function doClean() {
     .map((c) => c.dataset.rule);
   if (!ids.length) return;
   const keep = $("keep").value.split(",").map((s) => s.trim()).filter(Boolean);
+  const wantRp = $("rp-check") && $("rp-check").checked;
   const ok = await confirmBox("清理确认",
     `将清理 ${ids.length} 条规则：\n${ids.join("、")}\n\n` +
-    "文件移入撤销区、注册表先导出备份，全部可还原。\n浏览器相关规则在浏览器运行时自动跳过。\n\n确认执行？");
+    (wantRp ? "将先请求创建系统还原点（需管理员，24h 节流）。\n" : "") +
+    "文件移入撤销区、注册表先导出备份，全部可还原。\n浏览器相关规则在浏览器运行时自动跳过。\n\n继续？");
   if (!ok) return;
   const out = await api("clean", {method:"POST",
-    body: JSON.stringify({rules: ids, keep, confirm: true})});
+    body: JSON.stringify({rules: ids, keep, confirm: true,
+                          restore_point: wantRp})});
   stampFly("讫");
   const det = out.results.map((r) => `${r.id}: 文件${r.files} 注册表${r.deleted_values} 行${r.rows}`)
     .join("\n");
@@ -262,14 +265,51 @@ $("btn-updates").onclick = loadUpdates;
 $("btn-tools").onclick = loadTools;
 $("btn-undo").onclick = doUndo;
 
+/* ---------- 重复快查 ---------- */
+async function loadDupes() {
+  const dir = $("dupes-dir").value.trim();
+  if (!dir) { alert("先填要扫描的目录。"); return; }
+  const min = parseFloat($("dupes-min").value || "10");
+  $("dupes-body").innerHTML =
+    `<tr><td colspan="4" class="empty">哈希比对中……（目录大时较慢）</td></tr>`;
+  try {
+    const {groups} = await api(`dupes?dir=${encodeURIComponent(dir)}&min=${min}`);
+    const tb = $("dupes-body");
+    tb.innerHTML = "";
+    if (!groups.length) {
+      tb.innerHTML = `<tr><td colspan="4" class="empty">该体积阈值下未发现重复文件。</td></tr>`;
+    }
+    groups.forEach((g, i) => {
+      const tr = document.createElement("tr");
+      if (i % 2) tr.style.background = "var(--paper2)";
+      tr.innerHTML = `<td class="n">${g.count}</td><td class="n">${human(g.size)}</td>
+        <td class="n ok-text">${human(g.wasted)}</td>
+        <td style="font-size:12px;word-break:break-all">${g.files.map(esc).join("<br>")}</td>`;
+      tb.appendChild(tr);
+    });
+  } catch (e) {
+    $("dupes-body").innerHTML = `<tr><td colspan="4" class="empty">${esc(e.message)}</td></tr>`;
+  }
+}
+$("btn-dupes").onclick = loadDupes;
+
 /* 初始：一次编排式载入——台账、加固、销账自动到位，其余等用户点。
    file:// 直开时引擎不可达：给出诚实提示而不是静默报错。 */
-if (location.protocol === "http:" && location.hostname === "127.0.0.1") {
+let PLATFORM = "unknown";
+async function boot() {
+  if (!(location.protocol === "http:" && location.hostname === "127.0.0.1")) {
+    $("health-note").textContent =
+      "当前以 file:// 直接打开——请通过 server.py 打印的 http://127.0.0.1 地址访问。";
+    $("harden-body").innerHTML =
+      `<tr><td colspan="3" class="empty">请经本地服务器访问（见上方提示）。</td></tr>`;
+    return;
+  }
+  try {
+    const h = await api("health");
+    PLATFORM = h.platform || "unknown";
+  } catch (e) {}
+  if (PLATFORM === "win32") $("rp-label").style.display = "inline";
   loadHealth();
   loadHarden();
-} else {
-  $("health-note").textContent =
-    "当前以 file:// 直接打开——请通过 server.py 打印的 http://127.0.0.1 地址访问。";
-  $("harden-body").innerHTML =
-    `<tr><td colspan="3" class="empty">请经本地服务器访问（见上方提示）。</td></tr>`;
 }
+boot();

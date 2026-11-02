@@ -71,6 +71,8 @@ try:
     code, b = get("/api/scan")
     n = len(json.loads(b)["results"])
     report(code == 200 and n >= 1, f"GET /api/scan (rules={n})", code)
+    code, b = get(f"/api/dupes?dir={ROOT}&min=100000")
+    report(code == 200 and "groups" in json.loads(b), "GET /api/dupes (empty ok)", code)
 
     print(f"[selftest] PASS {ok} / FAIL {fail}")
     sys.exit(1 if fail else 0)
