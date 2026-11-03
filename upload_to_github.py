@@ -19,6 +19,7 @@ import time
 from pathlib import Path
 
 API = "https://api.github.com"
+CURL = shutil.which("curl") or "curl.exe"   # POSIX: curl; Windows: System32 curl.exe
 ROOT = Path(__file__).resolve().parent
 REPO_DESC = ("Clean-room privacy trace cleaner for Windows & macOS. "
              "Zero dependencies, zero network, everything reversible.")
@@ -28,7 +29,7 @@ EXCLUDE_SUFFIX = {".pyc", ".log"}
 def api(method, path, token, payload=None, raw=False, _retry=0):
     """GitHub API call via curl.exe (Schannel/Windows trust store - robust
     behind local proxies that break Python's OpenSSL chain validation)."""
-    cmd = ["curl.exe", "-sS", "-X", method, API + path,
+    cmd = [CURL, "-sS", "-X", method, API + path,
            "-H", f"Authorization: Bearer {token}",
            "-H", "Accept: application/vnd.github+json",
            "-H", "User-Agent: opensweep-uploader",
