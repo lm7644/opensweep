@@ -363,7 +363,7 @@ async function doScan() {
     btn.textContent = `扫描中… ${Math.floor((Date.now() - t0) / 1000)}s`;
   }, 1000);
   $("scan-body").innerHTML = "";
-  $("scan-body").appendChild(stateRow("loading", "正在只读扫描本机临时文件与痕迹……（临时目录较大时需一两分钟）"));
+  $("scan-body").appendChild(stateRow("loading", "正在只读扫描本机临时文件与痕迹……（临时目录大时可能要好几分钟，可先去看别的）"));
   $("scan-foot").hidden = true;
   $("scanbar").hidden = true;
   $("scan-note").hidden = true;
