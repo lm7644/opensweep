@@ -17,7 +17,18 @@
       <h1>OpenSweep 账本</h1>
       <span class="no" id="edition">No.20261105-v3.1</span>
     </div>
-    <p class="tagline">主程序零外联，默认只读，每一笔操作皆可划销——本机流水</p>
+    <p class="tagline">清掉这台电脑上可清理的临时文件与使用痕迹——默认只看不动手。</p>
+    <div class="hero">
+      <div class="hero-act">
+        <button class="seal hero-btn" id="btn-scan-hero" type="button">开始只读扫描</button>
+      </div>
+      <p class="hero-hint">三步：扫描 → 勾选 → 清理。不点「清理」，一个文件都不会动。</p>
+      <ul class="hero-facts">
+        <li><b>零外联</b>全程本机，不外发任何字节</li>
+        <li><b>可撤销</b>每笔清理都有 journal，可整笔还原</li>
+        <li><b>先备份</b>注册表先导出，文件先进撤销区</li>
+      </ul>
+    </div>
   </header>
 
   <aside class="rail reveal d1">
@@ -72,6 +83,26 @@
           <input type="checkbox" id="rp-check"> 先建系统还原点（Windows）
         </label>
       </div>
+
+      <div class="scanbar" id="scanbar" hidden>
+        <label class="scan-q">
+          <span class="sr-only">搜索规则</span>
+          <input id="rule-q" class="paper-input" type="search" autocomplete="off"
+            placeholder="搜规则：临时、浏览器、Edge、微信…" aria-label="按名称或内容搜索清理规则">
+        </label>
+        <div class="chips" role="group" aria-label="按风险等级筛选">
+          <button class="chip" type="button" data-risk="all" aria-pressed="true">全部</button>
+          <button class="chip" type="button" data-risk="high" aria-pressed="false">高风险<span class="chip-n" id="chip-n-high">0</span></button>
+          <button class="chip" type="button" data-risk="medium" aria-pressed="false">中风险<span class="chip-n" id="chip-n-med">0</span></button>
+          <button class="chip" type="button" data-risk="low" aria-pressed="false">低风险<span class="chip-n" id="chip-n-low">0</span></button>
+        </div>
+        <div class="scan-acts">
+          <button class="ink sm" id="btn-select-visible" type="button">全选可见</button>
+          <button class="ink sm" id="btn-clear-sel" type="button">清空选择</button>
+          <span class="sum" id="scan-count" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+
       <table class="ledger rows" id="scan-table">
         <thead>
           <tr>
@@ -80,12 +111,29 @@
             <th scope="col" class="n">体积</th><th scope="col">备注</th>
           </tr>
         </thead>
-        <tbody id="scan-body"><tr><td colspan="5" class="empty">尚未扫描——点「只读扫描」开始记账。</td></tr></tbody>
+        <tbody id="scan-body"><tr class="state-row empty"><td colspan="5" class="empty">尚未扫描——点上面的「开始只读扫描」或这里的「只读扫描」。</td></tr></tbody>
         <tfoot id="scan-foot" hidden>
           <tr><td colspan="2">本页合计</td><td class="n" id="sum-items">—</td><td class="n" id="sum-bytes">—</td><td></td></tr>
         </tfoot>
       </table>
       <div class="notice" id="scan-note" role="alert" hidden></div>
+
+      <div class="result" id="clean-result" hidden>
+        <div class="result-head">
+          <h3>本次清理结果</h3>
+          <span class="result-journal" id="result-journal"></span>
+        </div>
+        <div class="tri">
+          <div class="tri-cell tri-ok"><b id="res-ok">0</b><span>成功</span></div>
+          <div class="tri-cell tri-skip"><b id="res-skip">0</b><span>跳过</span></div>
+          <div class="tri-cell tri-fail"><b id="res-fail">0</b><span>失败</span></div>
+        </div>
+        <ul class="result-list" id="result-list"></ul>
+        <div class="btnrow">
+          <button class="ink sm" id="btn-result-close" type="button">收起结果</button>
+          <span class="hint">需要反悔时到「销账」选中该 journal 划销。</span>
+        </div>
+      </div>
     </section>
 
     <!-- 加固 -->
@@ -184,6 +232,10 @@
   <div id="confirm-warn" class="confirm-warn" hidden></div>
   <ul id="confirm-list" class="confirm-list" hidden></ul>
   <p id="confirm-foot" class="confirm-foot" hidden></p>
+  <label class="confirm-ack" id="confirm-ack-wrap" hidden>
+    <input type="checkbox" id="confirm-ack">
+    <span id="confirm-ack-text"></span>
+  </label>
   <div class="btnrow">
     <button class="ink" id="confirm-no">取消</button>
     <button class="seal danger" id="confirm-yes">用印确认</button>

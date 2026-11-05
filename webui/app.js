@@ -2,7 +2,16 @@
    纪律：破坏性动作必经 <dialog> 确认，默认焦点落在「取消」；完成后盖「讫」印。 */
 "use strict";
 
-const TOKEN = new URLSearchParams(location.search).get("t") || "";
+/* 令牌只存在于内存与 sessionStorage：地址栏里的 ?t= 读入后立刻抹掉，
+   避免用户截图/转发地址时把令牌一起带出去。 */
+let TOKEN = "";
+try {
+  TOKEN = new URLSearchParams(location.search).get("t") || sessionStorage.getItem("os-token") || "";
+  if (TOKEN) sessionStorage.setItem("os-token", TOKEN);
+  if (location.search) history.replaceState(null, "", location.pathname);
+} catch (e) {
+  TOKEN = new URLSearchParams(location.search).get("t") || "";
+}
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g,
   (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
@@ -61,6 +70,14 @@ function confirmBox(opt) {
     d.dataset.danger = opt.danger ? "1" : "0";
     $("confirm-yes").textContent = opt.okText || "用印确认";
     $("confirm-no").hidden = !!opt.info;
+    /* 危险动作：必须先亲手勾选风险确认，确认键才可用（防误触） */
+    const ack = $("confirm-ack");
+    $("confirm-ack-wrap").hidden = !opt.ack;
+    $("confirm-ack-text").textContent = opt.ack || "";
+    ack.checked = false;
+    $("confirm-yes").disabled = !!opt.ack;
+    const onAck = () => { $("confirm-yes").disabled = !ack.checked; };
+    if (opt.ack) ack.addEventListener("change", onAck);
 
     let settled = false;
     const done = (v) => {
@@ -68,6 +85,8 @@ function confirmBox(opt) {
       settled = true;
       d.close();
       $("confirm-yes").onclick = $("confirm-no").onclick = null;
+      ack.removeEventListener("change", onAck);
+      $("confirm-yes").disabled = false;
       d.removeEventListener("cancel", onCancel);
       d.removeEventListener("close", onClose);
       if (lastFocus && lastFocus.focus) lastFocus.focus();
@@ -123,57 +142,185 @@ function loadHealth() {
 
 /* ---------- 清理 ---------- */
 let scanData = [];
+let picked = new Set();          // 选择跨筛选保留
+let riskFilter = "all";
+let ruleQuery = "";
+
+/* 引擎规则名是英文（CLI 也用它），界面给非技术用户一份中文说法 */
+const RULE_ZH = {
+  "win.recentdocs": "最近打开的文档记录",
+  "win.runmru": "「运行」对话框历史",
+  "win.typedpaths": "资源管理器地址栏历史",
+  "win.wordwheel": "资源管理器搜索历史",
+  "win.userassist": "程序启动次数记录",
+  "win.comdlg": "打开/另存为对话框记录",
+  "win.mapdrive": "映射网络驱动器记录",
+  "win.findcomputer": "「查找计算机」记录",
+  "win.streams": "窗口布局缓存",
+  "win.traynotify": "托盘通知历史",
+  "win.pshistory": "PowerShell 命令历史",
+  "win.recentitems": "「最近使用」快捷方式",
+  "win.jumplists": "任务栏跳转列表",
+  "junk.temp.user": "用户临时文件（%TEMP%）",
+  "junk.temp.system": "系统临时文件（Windows\\Temp）",
+  "junk.wer": "Windows 错误报告存档",
+  "junk.crashdumps": "程序崩溃转储",
+  "junk.thumbnails": "缩略图与图标缓存",
+  "junk.shadercache": "DirectX 着色器缓存",
+  "junk.widgets": "小组件网页缓存",
+  "junk.dns": "刷新 DNS 解析缓存",
+  "junk.recyclebin": "清空回收站（全部盘，不可撤销）",
+  "app.winrar": "WinRAR 压缩包历史",
+  "app.7zip": "7-Zip 路径与压缩历史",
+  "app.office": "Office 最近文件",
+  "app.acrobat": "Adobe Reader 最近文件",
+  "app.mpchc": "MPC-HC 最近播放",
+  "app.qq.stemp": "QQ / QQNT 临时文件",
+  "app.wechat": "微信日志与缓存（不动聊天记录）",
+  "app.tencent.logs": "腾讯组件安装/诊断日志",
+  "app.doubao": "豆包客户端崩溃与指标缓存",
+  "browser.edge.cache": "Edge 缓存",
+  "browser.edge.history": "Edge 浏览历史",
+  "browser.edge.cookies": "Edge Cookie（可留白名单）",
+  "browser.edge.session": "Edge 会话恢复数据",
+  "browser.edge.autofill": "Edge 已保存的表单信息",
+  "browser.chrome.cache": "Chrome 缓存",
+  "browser.chrome.history": "Chrome 浏览历史",
+  "browser.chrome.cookies": "Chrome Cookie（可留白名单）",
+  "browser.chrome.session": "Chrome 会话恢复数据",
+  "browser.chrome.autofill": "Chrome 已保存的表单信息",
+  "browser.firefox.cache": "Firefox 缓存",
+  "browser.firefox.history": "Firefox 浏览历史",
+  "browser.firefox.cookies": "Firefox Cookie（可留白名单）",
+  "browser.firefox.autofill": "Firefox 已保存的表单内容",
+};
+const RISK_ORDER = ["high", "medium", "low"];
+const RISK_LABEL = {high: "高风险", medium: "中风险", low: "低风险"};
+const RISK_NOTE = {
+  high: "递归清空整个目录，可能碰到正在运行的程序——默认不勾选",
+  medium: "会改动使用记录或登录态，清完可能要重新登录/重填",
+  low: "缓存与历史，清掉后系统会自行重建",
+};
+/* 高风险规则逐条说明，写在规则名下面，不靠用户猜 */
+const RULE_WARN = {
+  "junk.temp.user": "整目录递归：安装程序、编辑器未保存的临时副本都可能被清掉。清理前请关掉正在运行的程序。",
+  "browser.edge.autofill": "会删掉已保存的地址/表单，之后需要重新填写。",
+  "browser.chrome.autofill": "会删掉已保存的地址/表单，之后需要重新填写。",
+  "browser.firefox.autofill": "会删掉已保存的表单内容，之后需要重新填写。",
+};
 /* 引擎备注是英文（CLI 也用它），账页里要读得懂：只翻译界面已知的几条 */
 function noteZh(n) {
-  const m = n.match(/^(\w+)\.exe running - deep scan skipped$/);
-  if (m) return `${m[1]} 正在运行，已跳过深度扫描`;
+  const deep = n.match(/^(\w+)\.exe running - deep scan skipped$/);
+  if (deep) return `${deep[1]} 正在运行，已跳过深度扫描`;
+  const run = n.match(/^(\S+)\.exe running$/);
+  if (run) return `${run[1]} 正在运行`;
+  const lock = n.match(/^(.+): locked$/);
+  if (lock) return `${lock[1]} 被占用，已跳过`;
   return {
     "must close browser before cleaning": "清理前请先关闭浏览器",
-    "row counts n/a while browser running": "浏览器运行中不计条数",
-  }[n] || n;
+    "row counts n/a while browser running": "",
+    "recyclebin special is Windows-only; skipped": "回收站清空仅在 Windows 可用",
+    "needs administrator": "需要管理员权限",
+  }[n] ?? n;
 }
+
+function matchRule(o) {
+  if (riskFilter !== "all" && o.risk !== riskFilter) return false;
+  const q = ruleQuery.trim().toLowerCase();
+  if (!q) return true;
+  const zh = RULE_ZH[o.id] || "";
+  return (o.id + " " + o.name + " " + zh).toLowerCase().includes(q);
+}
+
+function stateRow(cls, text) {
+  const tr = document.createElement("tr");
+  tr.className = "state-row " + cls;
+  tr.innerHTML = `<td colspan="5" class="empty">${esc(text)}</td>`;
+  return tr;
+}
+
 function renderScan(results) {
   const tb = $("scan-body");
   tb.innerHTML = "";
-  for (const o of results) {
-    const tr = document.createElement("tr");
-    const has = o.items > 0;
-    if (!has) tr.className = "zero-row";
-    const badge = o.risk === "high" ? `<span class="badge high">高风险</span>`
-      : (o.risk === "medium" ? `<span class="badge med">中风险</span>` : "");
-    const label = has ? `选择规则 ${o.id}` : `${o.id}，当前无条目`;
-    tr.innerHTML = `<td><input type="checkbox" data-rule="${esc(o.id)}"${has ? "" : " disabled"}
-        aria-label="${esc(label)}"></td>
-      <td><span class="rule-name">${esc(o.id)}</span>${badge}</td>
-      <td class="n" data-l="条目">${o.items.toLocaleString()}</td>
-      <td class="n" data-l="体积">${o.bytes ? human(o.bytes) : "—"}</td>
-      <td class="rule-note">${esc(o.notes.map(noteZh).join("; "))}</td>`;
-    const cb = tr.querySelector("input");
-    tr.addEventListener("click", (e) => {
-      if (e.target.tagName === "INPUT" || cb.disabled) return;
-      cb.checked = !cb.checked;
-      tr.classList.toggle("selected", cb.checked);
-      syncClean();
-    });
-    cb.addEventListener("change", () => {
-      tr.classList.toggle("selected", cb.checked);
-      syncClean();
-    });
-    tb.appendChild(tr);
+  const visible = results.filter(matchRule);
+  if (!visible.length) {
+    const why = results.length ? "没有匹配的规则——换个关键词，或把风险筛选切回「全部」。"
+      : "没有读取到清理规则。";
+    tb.appendChild(stateRow("empty", why));
+  }
+  for (const risk of RISK_ORDER) {
+    const group = visible.filter((o) => o.risk === risk);
+    if (!group.length) continue;
+    let items = 0, bytes = 0;
+    for (const o of group) { items += o.items; bytes += o.bytes; }
+    const gr = document.createElement("tr");
+    gr.className = "group";
+    gr.innerHTML = `<td colspan="5"><div class="g-wrap">
+      <span class="g-title">${RISK_LABEL[risk]}<span class="rule-note"> · ${RISK_NOTE[risk]}</span></span>
+      <span class="g-n">${group.length} 条 · ${items.toLocaleString()} 项${bytes ? " · " + human(bytes) : ""}</span>
+    </div></td>`;
+    tb.appendChild(gr);
+    for (const o of group) {
+      const tr = document.createElement("tr");
+      const has = o.items > 0;
+      tr.dataset.risk = o.risk;
+      if (!has) tr.className = "zero-row";
+      const badge = o.risk === "high" ? `<span class="badge high">高风险</span>`
+        : (o.risk === "medium" ? `<span class="badge med">中风险</span>` : "");
+      const warn = RULE_WARN[o.id] ? `<span class="rule-warn">${esc(RULE_WARN[o.id])}</span>` : "";
+      const label = has
+        ? `选择规则 ${o.id}（${RULE_ZH[o.id] || o.name}）`
+        : `${o.id}，当前无条目`;
+      tr.innerHTML = `<td><input type="checkbox" data-rule="${esc(o.id)}"${has ? "" : " disabled"}
+          aria-label="${esc(label)}"></td>
+        <td><span class="rule-name">${esc(RULE_ZH[o.id] || o.name)}</span>${badge}
+          <br><span class="rule-id">${esc(o.id)}</span>${warn}</td>
+        <td class="n" data-l="条目">${o.items.toLocaleString()}</td>
+        <td class="n" data-l="体积">${o.bytes ? human(o.bytes) : "—"}</td>
+        <td class="rule-note">${esc(o.notes.map(noteZh).filter(Boolean).join("；"))}</td>`;
+      const cb = tr.querySelector("input");
+      cb.checked = picked.has(o.id);
+      if (cb.checked) tr.classList.add("selected");
+      tr.addEventListener("click", (e) => {
+        if (e.target.tagName === "INPUT" || cb.disabled) return;
+        cb.checked = !cb.checked;
+        cb.dispatchEvent(new Event("change"));
+      });
+      cb.addEventListener("change", () => {
+        if (cb.checked) picked.add(o.id); else picked.delete(o.id);
+        tr.classList.toggle("selected", cb.checked);
+        syncClean();
+      });
+      tb.appendChild(tr);
+    }
   }
   let items = 0, bytes = 0;
-  for (const o of results) { items += o.items; bytes += o.bytes; }
+  for (const o of visible) { items += o.items; bytes += o.bytes; }
   $("sum-items").textContent = items.toLocaleString();
   $("sum-bytes").textContent = bytes ? human(bytes) : "—";
-  $("scan-foot").hidden = results.length === 0;
+  $("scan-foot").hidden = visible.length === 0;
+
+  const byRisk = {high: 0, medium: 0, low: 0};
+  for (const o of results) if (byRisk[o.risk] != null) byRisk[o.risk] += 1;
+  $("chip-n-high").textContent = byRisk.high;
+  $("chip-n-med").textContent = byRisk.medium;
+  $("chip-n-low").textContent = byRisk.low;
+  $("scan-count").textContent = visible.length === results.length
+    ? `${results.length} 条规则` : `${visible.length} / ${results.length} 条`;
+  $("scanbar").hidden = results.length === 0;
+  syncClean();
 }
 
-function selectedIds() {
-  return [...document.querySelectorAll("#scan-body input:checked")].map((c) => c.dataset.rule);
+function setRisk(risk) {
+  riskFilter = risk;
+  for (const b of document.querySelectorAll(".chips .chip")) {
+    b.setAttribute("aria-pressed", b.dataset.risk === risk ? "true" : "false");
+  }
+  renderScan(scanData);
 }
 
 function syncClean() {
-  const ids = selectedIds();
+  const ids = [...picked];
   let items = 0, bytes = 0;
   const high = [];
   for (const id of ids) {
@@ -195,16 +342,31 @@ function syncClean() {
   return {ids, items, bytes, high};
 }
 
+function selectVisible() {
+  for (const o of scanData.filter(matchRule)) if (o.items > 0) picked.add(o.id);
+  renderScan(scanData);
+}
+
+function clearPicked() {
+  picked.clear();
+  renderScan(scanData);
+}
+
 async function doScan() {
   const btn = $("btn-scan");
-  btn.disabled = true;
+  const hero = $("btn-scan-hero");
+  btn.disabled = hero.disabled = true;
   busy(btn, true, "扫描中… 0s");
+  busy(hero, true, "扫描中…");
   const t0 = Date.now();
   const tick = setInterval(() => {
     btn.textContent = `扫描中… ${Math.floor((Date.now() - t0) / 1000)}s`;
   }, 1000);
-  $("scan-body").innerHTML = `<tr><td colspan="5" class="empty">扫描中……（临时目录较大时需一两分钟）</td></tr>`;
+  $("scan-body").innerHTML = "";
+  $("scan-body").appendChild(stateRow("loading", "正在只读扫描本机临时文件与痕迹……（临时目录较大时需一两分钟）"));
   $("scan-foot").hidden = true;
+  $("scanbar").hidden = true;
+  $("scan-note").hidden = true;
   notice("scan-note", "");
   $("health-stamp").hidden = true;
   $("k-scan-items").textContent = "—";
@@ -212,6 +374,10 @@ async function doScan() {
   try {
     const {results} = await api("scan");
     scanData = results;
+    for (const id of [...picked]) {
+      const r = results.find((x) => x.id === id);
+      if (!r || r.items === 0) picked.delete(id);
+    }
     renderScan(results);
     let items = 0, bytes = 0;
     for (const r of results) { items += r.items; bytes += r.bytes; }
@@ -220,13 +386,70 @@ async function doScan() {
     $("health-stamp").hidden = false;
   } catch (e) {
     scanData = [];
+    picked.clear();
     $("k-scan-size").textContent = "扫描失败";
-    $("scan-body").innerHTML = `<tr><td colspan="5" class="empty">扫描失败：${esc(e.message)}</td></tr>`;
+    $("scan-body").innerHTML = "";
+    $("scan-body").appendChild(stateRow("error", `扫描失败：${e.message}——点「只读扫描」可重试。`));
+    notice("scan-note", `扫描失败：${e.message}`);
   }
-  btn.disabled = false;
+  btn.disabled = hero.disabled = false;
   clearInterval(tick);
   busy(btn, false);
+  busy(hero, false);
   syncClean();
+}
+
+/* 单条规则的结果分类：成功 / 部分 / 跳过 / 失败 */
+function classify(r) {
+  const did = r.files + r.deleted_values + r.deleted_keys + r.rows;
+  const sk = r.skipped ? r.skipped.length : 0;
+  if (sk && !did) return "skip";
+  if (sk && did) return "part";
+  if (!did) return "skip";
+  return "ok";
+}
+const PILL = {ok: "成功", part: "部分", skip: "跳过", fail: "失败"};
+
+function setTri(ok, skip, fail) {
+  for (const [id, v] of [["res-ok", ok], ["res-skip", skip], ["res-fail", fail]]) {
+    const el = $(id);
+    el.textContent = v;
+    el.parentElement.classList.toggle("is-zero", v === 0);
+  }
+}
+
+function showResult(sel, out) {
+  const list = $("result-list");
+  list.innerHTML = "";
+  let ok = 0, skip = 0, fail = 0;
+  for (const id of sel.ids) {
+    const r = out.results.find((x) => x.id === id);
+    const li = document.createElement("li");
+    if (!r) {
+      fail += 1;
+      li.innerHTML = `<span class="pill fail">失败</span>
+        <span class="rl-name">${esc(RULE_ZH[id] || id)}<span class="rl-id">${esc(id)}</span></span>
+        <span class="rl-val">引擎未返回该规则</span>`;
+    } else {
+      const k = classify(r);
+      if (k === "ok" || k === "part") ok += 1; else if (k === "skip") skip += 1; else fail += 1;
+      const bits = [];
+      if (r.files) bits.push(`文件 ${r.files}`);
+      if (r.deleted_values) bits.push(`注册表 ${r.deleted_values} 值`);
+      if (r.rows) bits.push(`记录 ${r.rows} 行`);
+      if (r.bytes) bits.push(human(r.bytes));
+      const why = r.skipped && r.skipped.length
+        ? `<span class="rule-warn">${esc(r.skipped.map(noteZh).filter(Boolean).join("；"))}</span>` : "";
+      li.innerHTML = `<span class="pill ${k}">${PILL[k]}</span>
+        <span class="rl-name">${esc(RULE_ZH[id] || id)}<span class="rl-id">${esc(id)}</span>${why}</span>
+        <span class="rl-val">${bits.length ? esc(bits.join(" · ")) : "无条目"}</span>`;
+    }
+    list.appendChild(li);
+  }
+  setTri(ok, skip, fail);
+  $("result-journal").textContent = out.journal ? `journal：${out.journal}` : "";
+  $("clean-result").hidden = false;
+  $("clean-result").scrollIntoView({block: "nearest", behavior: "smooth"});
 }
 
 async function doClean() {
@@ -234,10 +457,10 @@ async function doClean() {
   if (!sel.ids.length) return;
   const rows = sel.ids.map((id) => {
     const r = scanData.find((x) => x.id === id) || {items: 0, bytes: 0, risk: "low"};
-    return {label: id, value: `${r.items.toLocaleString()} 项 · ${r.bytes ? human(r.bytes) : "—"}`, danger: r.risk === "high"};
+    return {label: RULE_ZH[id] || id, value: `${r.items.toLocaleString()} 项 · ${r.bytes ? human(r.bytes) : "—"}`, danger: r.risk === "high"};
   });
   const warn = sel.high.length
-    ? `高风险规则 <b>${sel.high.map(esc).join("、")}</b> 用 <b>*</b> 递归匹配整个目录，会连其他程序正在使用的临时文件一起清掉。确认前请关闭安装程序与正在运行的应用。`
+    ? `高风险规则 <b>${sel.high.map((i) => esc(RULE_ZH[i] || i)).join("、")}</b> 用 <b>*</b> 递归匹配整个目录，会连其他程序正在使用的临时文件一起清掉。确认前请关闭安装程序与正在运行的应用。`
     : "";
   const ok = await confirmBox({
     title: "清理确认",
@@ -246,6 +469,7 @@ async function doClean() {
     rows,
     foot: "文件移入撤销区、注册表先导出备份，可在「销账」里整笔还原。浏览器相关规则在浏览器运行时自动跳过。",
     danger: sel.high.length > 0,
+    ack: sel.high.length ? "我知道高风险规则会清空整个目录，已关闭正在运行的程序。" : "",
     okText: "用印清理",
   });
   if (!ok) return;
@@ -260,16 +484,22 @@ async function doClean() {
       body: JSON.stringify({rules: sel.ids, keep, confirm: true, restore_point: wantRp}),
     });
     stampFly("讫");
-    const det = out.results.map((r) => `${r.id}：文件 ${r.files} · 注册表 ${r.deleted_values} 行 ${r.rows}`).join("\n");
-    await confirmBox({
-      title: "记账完成（可撤销）",
-      body: `journal：${out.journal}\n\n${det || "（无变更）"}`,
-      foot: "如需反悔，到「销账」选中该 journal 划销。",
-      info: true,
-      okText: "知道了",
-    });
+    picked.clear();
+    showResult(sel, out);
     doScan(); loadHealth();
   } catch (e) {
+    const list = $("result-list");
+    list.innerHTML = "";
+    for (const id of sel.ids) {
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="pill fail">失败</span>
+        <span class="rl-name">${esc(RULE_ZH[id] || id)}<span class="rl-id">${esc(id)}</span></span>
+        <span class="rl-val">${esc(e.message)}</span>`;
+      list.appendChild(li);
+    }
+    setTri(0, 0, sel.ids.length);
+    $("result-journal").textContent = "本次未写入 journal";
+    $("clean-result").hidden = false;
     notice("scan-note", `清理失败：${e.message}`);
   }
   btn.disabled = false;
@@ -543,6 +773,28 @@ $("btn-updates").onclick = loadUpdates;
 $("btn-tools").onclick = loadTools;
 $("btn-undo").onclick = doUndo;
 $("btn-dupes").onclick = loadDupes;
+
+/* 首屏主操作：滚到清理区再开扫，让用户立刻看到加载态与结果 */
+$("btn-scan-hero").onclick = () => {
+  $("sec-clean").scrollIntoView({block: "start"});
+  doScan();
+};
+$("btn-select-visible").onclick = selectVisible;
+$("btn-clear-sel").onclick = clearPicked;
+$("btn-result-close").onclick = () => { $("clean-result").hidden = true; };
+for (const chip of document.querySelectorAll(".chips .chip")) {
+  chip.addEventListener("click", () => setRisk(chip.dataset.risk));
+}
+let qTimer = null;
+$("rule-q").addEventListener("input", (e) => {
+  const v = e.target.value;
+  clearTimeout(qTimer);
+  qTimer = setTimeout(() => { ruleQuery = v; renderScan(scanData); }, 120);
+});
+$("rule-q").addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  e.target.value = ""; ruleQuery = ""; renderScan(scanData);
+});
 
 /* 初始：一次编排式载入——台账、加固、销账自动到位，其余等用户点。
    file:// 直开时引擎不可达：给出诚实提示而不是静默报错。 */

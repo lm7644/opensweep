@@ -154,6 +154,98 @@ button[aria-busy="true"]{cursor:progress;opacity:.72}
   background:color-mix(in srgb,var(--cinnabar) 6%,var(--paper));
   color:var(--ink);font-size:14px;line-height:1.7}
 
+/* ---- 首屏：一句话定位 ＋ 主操作 ＋ 三条硬事实 ---- */
+.tagline{font-size:17px;max-width:56ch}
+.hero{margin-top:var(--s2);padding:var(--s2) var(--s3);background:var(--paper2);
+  border:1px solid var(--ink);border-left:3px solid var(--cinnabar);
+  display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,270px);
+  column-gap:var(--s3);row-gap:var(--s2);align-items:center}
+.hero-act{display:flex}
+.hero-hint{font-size:13px;line-height:1.75;color:var(--ink2)}
+button.hero-btn{font-size:19px;padding:0 26px;min-height:52px}
+.hero-facts{list-style:none;display:grid;gap:8px}
+.hero-facts li{font-size:13px;line-height:1.6;color:var(--ink2);padding-left:10px;
+  border-left:2px solid var(--hair)}
+.hero-facts b{display:block;color:var(--ink);font-size:12px;letter-spacing:.12em}
+
+/* ---- 规则工具栏：搜索 ＋ 风险筛选 ＋ 批量选择 ---- */
+.scanbar{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--s2);
+  row-gap:var(--s1);align-items:center;margin-top:var(--s2);padding-bottom:var(--s2);
+  border-bottom:1px solid var(--hair)}
+.scan-q{display:block;min-width:0}
+.scan-q input{width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{min-height:44px;padding:0 12px;background:transparent;border:1px solid var(--hair);
+  color:var(--ink2);font:600 13px/1 var(--sans);letter-spacing:.04em;
+  border-radius:2px;display:inline-flex;align-items:center;gap:6px}
+.chip:hover{border-color:var(--ink);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip-n{font-variant-numeric:tabular-nums;font-weight:400;opacity:.75}
+.chip[data-risk="high"][aria-pressed="true"]{background:var(--cinnabar);border-color:var(--cinnabar)}
+.scan-acts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:var(--s1);align-items:center}
+button.ink.sm{font-size:13px;padding:0 12px;min-height:44px}
+
+/* ---- 规则分组行：高风险置顶，眉标一行 ---- */
+.ledger tbody tr.group:hover{background:transparent}
+.ledger tbody tr.group td{background:var(--paper2);border-top:1px solid var(--ink);
+  border-bottom:1px solid var(--hair);padding-top:8px;padding-bottom:8px}
+.g-wrap{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s2);
+  font-size:13px;letter-spacing:.04em;color:var(--ink2);font-weight:600}
+.g-title{color:var(--ink)}
+.g-n{font-variant-numeric:tabular-nums;font-weight:400;white-space:nowrap}
+.ledger tbody tr.risk-high td:nth-child(2){box-shadow:inset 2px 0 0 var(--cinnabar)}
+.rule-id{display:inline-block;font-size:12px;line-height:1.5;color:var(--ink2);
+  letter-spacing:.02em;opacity:.8;margin-top:1px}
+.rule-warn{display:block;font-size:12px;line-height:1.55;color:var(--cinnabar);margin-top:3px}
+
+/* ---- 空态 / 加载态：一句诚实的话，不装样子 ---- */
+.ledger tbody tr.state-row:hover{background:transparent}
+.state-row td{color:var(--ink2);font-size:14px;text-align:center;padding:var(--s3) var(--s1)}
+.state-row.loading td{color:var(--ink)}
+.state-row.error td{color:var(--cinnabar);border-left:3px solid var(--cinnabar);text-align:left}
+.state-row.loading td::after{content:"…";display:inline-block;margin-left:2px;
+  animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+
+/* ---- 清理结果：成功 / 跳过 / 失败 三格 ＋ 逐条明细 ---- */
+.result{margin-top:var(--s3);border:1px solid var(--ink);border-top:3px double var(--ink);
+  padding:var(--s2) var(--s3) var(--s3);background:var(--paper)}
+.result-head{display:flex;justify-content:space-between;align-items:baseline;
+  gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s2)}
+.result-head h3{font-size:18px}
+.result-journal{font-size:12px;color:var(--ink2);letter-spacing:.02em;word-break:break-all}
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s1);margin-bottom:var(--s2)}
+.tri-cell{padding:var(--s2) var(--s1);border:1px solid var(--hair);background:var(--paper2);
+  text-align:center}
+.tri-cell b{display:block;font:600 26px/1.2 var(--sans);font-variant-numeric:tabular-nums}
+.tri-cell span{font-size:12px;letter-spacing:.12em;color:var(--ink2)}
+.tri-ok b{color:var(--ok)}
+.tri-fail b{color:var(--cinnabar)}
+.tri-cell.is-zero b{color:var(--ink2);opacity:.5}
+.result-list{list-style:none;border-top:1px solid var(--hair)}
+.result-list li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;
+  column-gap:var(--s2);row-gap:2px;align-items:baseline;padding:8px 0;
+  border-bottom:1px solid var(--hair);font-size:14px;line-height:1.6}
+.result-list .rl-name{font-weight:600;min-width:0}
+.result-list .rl-id{font-size:12px;color:var(--ink2);margin-left:8px;font-weight:400}
+.result-list .rl-val{font-size:13px;color:var(--ink2);font-variant-numeric:tabular-nums;
+  text-align:right}
+.pill{font-size:11px;letter-spacing:.1em;padding:2px 7px;border:1px solid;border-radius:2px;
+  white-space:nowrap}
+.pill.ok{color:var(--ok);border-color:var(--ok)}
+.pill.skip{color:var(--ink2);border-color:var(--hair)}
+.pill.part{color:var(--cinnabar);border-color:var(--cinnabar)}
+.pill.fail{color:var(--paper);background:var(--cinnabar);border-color:var(--cinnabar)}
+
+/* ---- 危险确认：必须亲手勾选风险确认，确认键才亮 ---- */
+.confirm-ack{display:flex;align-items:flex-start;gap:10px;min-height:44px;
+  margin:0 0 var(--s2);padding:10px var(--s2);border:1px dashed var(--cinnabar);
+  font-size:14px;line-height:1.6;color:var(--ink)}
+.confirm-ack input{accent-color:var(--cinnabar);width:18px;height:18px;margin-top:2px;
+  flex:0 0 auto}
+button.seal.danger:disabled{background:transparent;color:var(--ink2);border:1px dashed var(--hair);
+  letter-spacing:.1em}
+
 /* ---- 键盘焦点（无障碍：焦点必须可见） ---- */
 :where(a,button,input,select,textarea,[tabindex]):focus-visible{
   outline:2px solid var(--cinnabar);outline-offset:2px}
@@ -205,6 +297,7 @@ dialog .btnrow{justify-content:flex-end;margin-top:var(--s2)}
 @media (prefers-reduced-motion:reduce){
   .reveal{animation:none;opacity:1;transform:none}
   #stamp-layer .stamp.big,button.seal.stamped{animation:none}
+  .state-row.loading td::after{animation:none}
   html{scroll-behavior:auto}
 }
 
@@ -230,7 +323,7 @@ dialog .btnrow{justify-content:flex-end;margin-top:var(--s2)}
   .nav::-webkit-scrollbar{display:none}
   .nav a{writing-mode:horizontal-tb;text-orientation:mixed;letter-spacing:0;
     display:inline-flex;align-items:center;min-height:44px;padding:0 12px;
-    border-bottom:2px solid transparent;white-space:nowrap;font-size:15px}
+    border-bottom:2px solid transparent;white-space:nowrap;font-size:16px}
   .nav a:hover{border-bottom-color:color-mix(in srgb,var(--cinnabar) 40%,transparent)}
   .nav a[aria-current="true"]{border-bottom-color:var(--cinnabar);font-weight:600}
   .nav a[aria-current="true"]::after{display:none}
@@ -242,17 +335,55 @@ dialog .btnrow{justify-content:flex-end;margin-top:var(--s2)}
 @media (max-width:640px){
   body{padding:var(--s3) 0 var(--s5)}
   h1{font-size:30px}
-  .tagline{font-size:13px}
+  .tagline{font-size:16px;max-width:none}
   h2{font-size:21px;gap:10px;margin-bottom:var(--s2)}
   h2 .sub{font-size:13px}
   .sec{margin-top:var(--s4)}
-  .ledger th,.ledger td{font-size:13px}
-  .ledger td.n{font-size:16px}
+  .ledger th,.ledger td{font-size:16px}
+  .ledger td.n{font-size:17px}
+  .rule-note{font-size:15px}
+  .rule-id{font-size:13px}
+  .rule-warn{font-size:13px}
   .btnrow{gap:var(--s1);margin-top:var(--s2)}
-  button.ink,button.seal{width:auto;padding:0 12px;font-size:14px;letter-spacing:.08em}
-  .paper-input{flex:1 1 auto;min-width:120px}
+  button.ink,button.seal{width:auto;padding:0 12px;font-size:15px;letter-spacing:.08em}
+  .paper-input{flex:1 1 auto;min-width:120px;font-size:16px}
+  .check-line input{width:22px;height:22px}
   .mono-block{font-size:12px}
   #stamp-layer .stamp.big{font-size:56px}
+
+  /* 首屏窄屏：按钮在上、事实在下，一屏内看得到「开始只读扫描」 */
+  .hero{grid-template-columns:1fr;padding:var(--s2);row-gap:var(--s2)}
+  .hero-act{width:100%}
+  button.hero-btn{width:100%;min-height:56px}
+  .hero-hint{max-width:none;font-size:14px}
+  .hero-facts{grid-template-columns:1fr;gap:6px}
+
+  /* 工具栏窄屏：搜索占满一行，四颗筛选键两两排开 */
+  .scanbar{grid-template-columns:1fr}
+  .chips{gap:6px}
+  .chip{flex:1 1 calc(50% - 6px);justify-content:center;font-size:14px;min-height:44px}
+  .scan-acts{gap:var(--s1)}
+
+  /* 分组行在卡片式表格里同样独占一行 */
+  #scan-table tbody tr.group{display:block}
+  #scan-table tbody tr.group td{display:block;padding:8px 0}
+  .g-wrap{flex-wrap:wrap;gap:4px;font-size:14px}
+  #scan-table tbody tr.risk-high td:nth-child(2){box-shadow:none}
+  #scan-table tbody tr[data-risk="high"] td:nth-child(1){box-shadow:inset 3px 0 0 var(--cinnabar)}
+
+  /* 触控：复选框本身放大到 22px，整行仍是最小 44px 的点击区 */
+  .ledger input[type=checkbox],.ledger input[type=radio]{width:22px;height:22px}
+  #scan-table tbody tr{min-height:44px}
+  .state-row{display:block}
+  .state-row td{display:block}
+
+  /* 结果卡：三格并排，明细两行 */
+  .result{padding:var(--s2)}
+  .tri{gap:6px}
+  .tri-cell{padding:var(--s2) 4px}
+  .tri-cell b{font-size:22px}
+  .result-list li{grid-template-columns:auto minmax(0,1fr);row-gap:4px}
+  .result-list .rl-val{grid-column:2;text-align:left}
 
   /* 窄屏导航两行 88px，锚点跳转要留出整条签条，标题才不会被压住 */
   .sec{scroll-margin-top:96px}
