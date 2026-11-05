@@ -254,6 +254,9 @@ dialog .btnrow{justify-content:flex-end;margin-top:var(--s2)}
   .mono-block{font-size:12px}
   #stamp-layer .stamp.big{font-size:56px}
 
+  /* 窄屏导航两行 88px，锚点跳转要留出整条签条，标题才不会被压住 */
+  .sec{scroll-margin-top:96px}
+
   /* 窄屏导航换行铺满两行：九个账页全部可见，不藏在横向滚动里 */
   .nav{flex-wrap:wrap;overflow:visible}
   .nav a{min-height:44px;padding:0 10px}

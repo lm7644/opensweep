@@ -123,6 +123,15 @@ function loadHealth() {
 
 /* ---------- 清理 ---------- */
 let scanData = [];
+/* 引擎备注是英文（CLI 也用它），账页里要读得懂：只翻译界面已知的几条 */
+function noteZh(n) {
+  const m = n.match(/^(\w+)\.exe running - deep scan skipped$/);
+  if (m) return `${m[1]} 正在运行，已跳过深度扫描`;
+  return {
+    "must close browser before cleaning": "清理前请先关闭浏览器",
+    "row counts n/a while browser running": "浏览器运行中不计条数",
+  }[n] || n;
+}
 function renderScan(results) {
   const tb = $("scan-body");
   tb.innerHTML = "";
@@ -138,7 +147,7 @@ function renderScan(results) {
       <td><span class="rule-name">${esc(o.id)}</span>${badge}</td>
       <td class="n" data-l="条目">${o.items.toLocaleString()}</td>
       <td class="n" data-l="体积">${o.bytes ? human(o.bytes) : "—"}</td>
-      <td class="rule-note">${esc(o.notes.join("; "))}</td>`;
+      <td class="rule-note">${esc(o.notes.map(noteZh).join("; "))}</td>`;
     const cb = tr.querySelector("input");
     tr.addEventListener("click", (e) => {
       if (e.target.tagName === "INPUT" || cb.disabled) return;
