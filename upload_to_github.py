@@ -4,7 +4,9 @@ Pipeline: verify token -> create repo -> upload every file as blobs ->
 tree -> commit -> refs/heads/main -> sanitize -> watch the CI matrix.
 
 Usage:
-  python upload_to_github.py <TOKEN> [--name opensweep] [--private]
+  python upload_to_github.py [<TOKEN>] [--name opensweep] [--private]
+  (preferred: set GH_TOKEN in the environment and pass no token argument -
+   a token in argv is visible to other local processes via the process list)
 
 Token guidance (see RELEASE_CHECKLIST.md):
   fine-grained PAT: Contents RW + Administration RW (+ Actions R)
@@ -13,6 +15,8 @@ Revoke the token after the run.
 """
 import base64
 import json
+import os
+import shutil
 import subprocess
 import sys
 import time
@@ -74,10 +78,13 @@ def collect_files(skip_workflows=False):
 
 def main():
     args = sys.argv[1:]
-    if not args:
+    token = os.environ.get("GH_TOKEN", "")
+    if args and not args[0].startswith("-"):
+        token = args[0]
+        args = args[1:]
+    if not token:
         print(__doc__)
         sys.exit(1)
-    token = args[0]
     name = "opensweep"
     private = False
     if "--name" in args:

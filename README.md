@@ -5,9 +5,11 @@
 <a id="中文"></a>
 ## 中文
 
-Windows / macOS 隐私痕迹清理工具（**v3.1**，洁室实现）。**零依赖**（仅 Python 3.10+ 标准库）、**零网络**（无任何出站连接；winget 仅在更新页显式调用）、**默认只读**、**全操作可撤销**（journal 机制）、**凭据库全规则不可见**。
+Windows / macOS 隐私痕迹清理工具（**v3.1**，洁室实现）。**零依赖**（仅 Python 3.10+ 标准库）、**主程序零外联**（`updates` 页仅在你点击时调用 winget；维护者发布脚本 `upload_to_github.py` 会访问 GitHub API，不属于运行时功能）、**默认只读**、**全操作可撤销**（journal 机制）、**凭据库全规则不可见**。
 
 v3.1 新增：`report`（自包含 HTML 审计报告）、`dupes`（重复文件只读快查）、`apply --restore-point`（清理前系统还原点）、macOS `$TMPDIR` 按年龄清理规则（≥3 天）。
+
+> **重要（默认值变更）**：`junk.temp.user`（`%TEMP%`）已改为 **`risk: high` / `default: false`**，默认 `apply` 不再包含它。该规则用 `patterns: "*"` + `recurse: true` **递归清空整个用户临时目录**（含其他程序正在使用的临时文件），可撤销但会打断运行中的安装程序/应用。需要时请显式点名执行：`python opensweep.py apply --all --rule junk.temp.user --yes`，并先确认没有安装程序在跑。Web UI 会把该规则标为「高风险」并在确认框里单独提示。
 
 三种前端：CLI（`opensweep.py`）/ 暗色桌面 GUI（`gui.py`）/ 账本风本地 Web UI（`server.py` → http://127.0.0.1）。规则库为声明式 JSON（`rules-windows.json` / `rules-darwin.json` / `harden.json`），按平台加载。
 
@@ -41,7 +43,7 @@ python tests/test_suite.py         # 沙箱安全测试（清单哈希 + 多轮 
 <a id="english"></a>
 ## English
 
-A privacy trace cleaner for Windows & macOS (clean-room implementation). **Zero dependencies** (Python 3.10+ stdlib only), **zero network** (no outbound connections; winget only on the explicit updates page), **read-only by default**, and **everything reversible** via journals. Credential stores (Login Data / Bookmarks) are invisible to every rule.
+A privacy trace cleaner for Windows & macOS (clean-room implementation). **Zero dependencies** (Python 3.10+ stdlib only), **no outbound traffic from the app** (winget runs only when you open the updates page; the maintainer-only `upload_to_github.py` talks to the GitHub API), **read-only by default**, and **everything reversible** via journals. Credential stores (Login Data / Bookmarks) are invisible to every rule.
 
 Front-ends: CLI (`opensweep.py`), dark desktop GUI (`gui.py`), and a ledger-style local web UI (`server.py` → http://127.0.0.1, token-gated). Rules are declarative JSON loaded per platform (`rules-windows.json` / `rules-darwin.json` / `harden.json`).
 

@@ -18,7 +18,7 @@ from tkinter import messagebox, ttk
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import opensweep as engine
 
-APP = "OpenSweep v2.2"
+APP = "OpenSweep v3.1"
 
 # ---- design tokens -------------------------------------------------------
 BG      = "#14161a"   # window
@@ -112,7 +112,7 @@ class App:
         head = tk.Frame(self.root, bg=BG)
         head.pack(fill="x", padx=18, pady=(14, 6))
         tk.Label(head, text="OpenSweep", bg=BG, fg=FG, font=FONT_H).pack(side="left")
-        pill = tk.Label(head, text=" v2.2 ", bg=PANEL2, fg=MUTE, font=FONT_S)
+        pill = tk.Label(head, text=" v3.1 ", bg=PANEL2, fg=MUTE, font=FONT_S)
         pill.pack(side="left", padx=(10, 6), pady=4)
         tk.Label(head, text="零网络 · 默认只读 · 全程可撤销", bg=BG, fg=MUTE,
                  font=FONT_S).pack(side="left", padx=2)
@@ -463,7 +463,7 @@ class App:
 
     def do_undo_list(self):
         def work():
-            return sorted(engine.UNDO_ROOT.glob("journal-*.json")) if engine.UNDO_ROOT.exists() else []
+            return sorted(engine.UNDO_ROOT.glob("*.json")) if engine.UNDO_ROOT.exists() else []
 
         def done(files):
             tv = self.tv_undo

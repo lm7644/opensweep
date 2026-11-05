@@ -30,6 +30,7 @@ import ctypes
 import datetime
 import fnmatch
 import hashlib
+import html as _html
 import json
 import os
 import re
@@ -209,7 +210,9 @@ UNDO_PREFIX = str(UNDO_ROOT).lower() + os.sep
 # credential/bookmark stores are invisible to EVERY rule, wherever they sit
 # (live drill found a browser profile copy inside %TEMP% — these must never
 # be cleaned, not even into the undo area)
-PROTECTED_NAMES = {"login data", "login data-journal", "bookmarks", "bookmarks.bak"}
+PROTECTED_NAMES = {"login data", "login data-journal", "login data for account",
+                   "bookmarks", "bookmarks.bak",
+                   "logins.json", "logins-backup.json", "key4.db", "signons.sqlite"}
 
 def iter_file_candidates(spec):
     """Yield candidate files for a files-spec. Handles file-type bases (the
@@ -880,7 +883,7 @@ def create_restore_point(description="OpenSweep"):
             capture_output=True, text=True, timeout=600)
         if r.returncode == 0:
             return True, "restore point requested (OS may throttle to one per 24h)"
-        return False, (r.stderr.strip()[:140]
+        return False, ((r.stderr or "").strip()[:140]
                        or "requires administrator / System Restore enabled")
     except Exception as e:
         return False, str(e)[:140]
@@ -937,17 +940,18 @@ def report_html(out_path):
     nh = sum(1 for r in harden if r["status"] == "hardened")
     ne = sum(1 for r in harden if r["status"] == "exposed")
     na = sum(1 for r in harden if r["status"] == "admin-required")
-    journals = (sorted(UNDO_ROOT.glob("journal-*.json"))
+    journals = (sorted(UNDO_ROOT.glob("*.json"))
                 if UNDO_ROOT.exists() else [])
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     rows = "\n".join(
-        f'<tr><td>{o["id"]}</td><td class="n">{o["items"]:,}</td>'
+        f'<tr><td>{_html.escape(str(o["id"]))}</td><td class="n">{o["items"]:,}</td>'
         f'<td class="n">{human(o["bytes"])}</td>'
         f'<td style="font-size:13px;color:var(--ink2)">'
-        f'{o["notes"][0] if o["notes"] else ""}</td></tr>'
+        f'{_html.escape(str(o["notes"][0]) if o["notes"] else "")}</td></tr>'
         for o in scan if o["items"] or o["notes"])
     hrows = "\n".join(
-        f'<tr><td>{r["id"]}</td><td>{r["status"]}</td></tr>' for r in harden)
+        f'<tr><td>{_html.escape(str(r["id"]))}</td>'
+        f'<td>{_html.escape(str(r["status"]))}</td></tr>' for r in harden)
     html = f"""<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
 <title>OpenSweep 审计报告 {now}</title><style>
 body{{background:#f2ede1;color:#211d17;font:16px/1.7 "Segoe UI","Microsoft YaHei",sans-serif;

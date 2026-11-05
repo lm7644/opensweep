@@ -12,7 +12,7 @@
 
 | # | CCleaner 功能 | 逆向证据 | OpenSweep | 说明 |
 |---|---|---|---|---|
-| 1 | Custom Clean（Windows/应用清理） | `ccleaner.ini` 769 节规则语法 `ID/Default/ActiveProcesses/FileKey/RegKey/OnFile处理器` | ✅ | 41 条自撰规则（v1.1 复查修订）；覆盖 §3.2 所列隐私面（MRU 全套含 Jump Lists/Cookie 行级删/历史/缓存/垃圾） |
+| 1 | Custom Clean（Windows/应用清理） | `ccleaner.ini` 769 节规则语法 `ID/Default/ActiveProcesses/FileKey/RegKey/OnFile处理器` | ✅ | 45 条自撰规则（v3.1 当前 `rules-windows.json`）；覆盖 §3.2 所列隐私面（MRU 全套含 Jump Lists/Cookie 行级删/历史/缓存/垃圾） |
 | 2 | Cookie 选择性删除 + 站点白名单 | `CookiesSQLite3DB` 处理器、`#SelCookies/#DelCookies`、`CookiesAllowedList` | ✅ | `DELETE FROM cookies WHERE NOT (host LIKE …)` + `--keep-cookies` |
 | 3 | 进程守卫（清理前等/关浏览器） | 规则字段 `ActiveProcesses=msedge.exe` | ✅ | `needs_close` + tasklist 检测，浏览器运行即跳过 |
 | 4 | Health Check（清理/隐私/速度/安全四项） | `HealthCheckPrivacy.*` 代码模型 | ⚠️ | `scan` 命令= 只读扫描汇总（垃圾+追踪器+痕迹）；"速度/安全"依赖驱动/软件更新引擎，不复刻 |
@@ -31,18 +31,18 @@
 | 17 | 监控/Smart Cleaning/PC Health | `pc_health.json` 13 触发器（事件日志游标）+ LocalSystem 服务 | ❌ | 常驻监控是隐私与攻击面负债，不复刻 |
 | 18 | 云清理/账号同步 | `cloud_cleaning` token 流程、`id.avast.com` SSO | ❌ | 零网络原则 |
 | 19 | IPM 广告/交叉推广/升窗 | `IpmParamSolver@sdk@avast_ad`、`ClientParameters.GoogleAdvertisingId`、LIS 静默安装包、NotifyLimit 骚扰频控 | ❌ | **刻意减法——这是本项目存在的理由之一** |
-| 20 | 遥测（心跳/设备详情/统计上报） | `[Analytics] lastHeartbeat`、statistics.db、burger_client、`submit.sb.avast.com` | ❌ | **零网络：无任何出站调用（可用 netstat 验证）** |
+| 20 | 遥测（心跳/设备详情/统计上报） | `[Analytics] lastHeartbeat`、statistics.db、burger_client、`submit.sb.avast.com` | ❌ | **应用零外联：主程序无出站调用（可用 netstat 验证）；`updates` 页点击后才调用 winget，`upload_to_github.py` 为维护者工具** |
 | 21 | 多语言 UI | 60 个 lang dll | ⚠️ | CLI 英文输出；无 UI 框架依赖是零依赖设计的一部分 |
 
 ## 与原版的安全设计差异（OpenSweep 增强项）
 
-| 维度 | CCleaner 7.13 | OpenSweep v1 |
+| 维度 | CCleaner 7.13 | OpenSweep v3.1 |
 |---|---|---|
 | 默认模式 | GUI 勾选即执行 | **dry-run 默认**，`--yes` 显式执行 |
 | 可撤销性 | 仅注册表清理有备份 | **全操作日志化**（文件/注册表/SQLite 三类均可 `undo`） |
 | 凭据安全 | 提供"保存的密码"清理项（默认关） | **不实现**该能力 |
 | 权限面 | LocalSystem 服务常驻 + 保活器 | 单进程、当前用户权限、无常驻 |
-| 网络 | 多通道遥测/配置/广告 | **0 出站连接** |
+| 网络 | 多通道遥测/配置/广告 | 主程序 **0 出站连接**（`updates`/发布脚本除外） |
 | 规则可信来源 | 远程 Shepherd 可动态改行为 | 规则本地静态，无远程修改通道 |
 
 ## 本机实测（2026-10-31，v1.1 回归扫描，只读）

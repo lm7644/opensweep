@@ -30,8 +30,15 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
         self.end_headers()
-        self.wfile.write(data)
+        try:
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
+            # 扫描要跑一两分钟，用户中途关页面/刷新是常态：不要为此打一屏 traceback
+            pass
 
     def _check(self):
         q = parse_qs(urlparse(self.path).query)
@@ -64,7 +71,7 @@ class Handler(BaseHTTPRequestHandler):
                 elif name == "tools":
                     self._json({"rows": engine.tools_report()})
                 elif name == "journals":
-                    files = (sorted(engine.UNDO_ROOT.glob("journal-*.json"))
+                    files = (sorted(engine.UNDO_ROOT.glob("*.json"))
                              if engine.UNDO_ROOT.exists() else [])
                     self._json({"journals": [{"name": f.name,
                                               "mtime": f.stat().st_mtime,
@@ -75,7 +82,7 @@ class Handler(BaseHTTPRequestHandler):
                     nh = sum(1 for r in rows if r["status"] == "hardened")
                     ne = sum(1 for r in rows if r["status"] == "exposed")
                     na = sum(1 for r in rows if r["status"] == "admin-required")
-                    n = (len(list(engine.UNDO_ROOT.glob("journal-*.json")))
+                    n = (len(list(engine.UNDO_ROOT.glob("*.json")))
                          if engine.UNDO_ROOT.exists() else 0)
                     self._json({"harden": {"hardened": nh, "exposed": ne, "admin": na},
                                 "journals": n, "rules": len(engine.RULES),
@@ -95,8 +102,9 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._json({"error": str(e)}, 500)
             return
-        if not self._check():
-            return
+        # static UI is public: it ships no data, every byte of data comes from
+        # the token-gated /api/ endpoints below. (Requiring a token here made
+        # the browser's own subresource requests (styles.css / app.js) 403.)
         rel = "index.html" if u.path in ("/", "/index.html") else u.path.lstrip("/")
         fp = (UI / rel).resolve()
         if UI.resolve() not in fp.parents or not fp.is_file():
@@ -109,6 +117,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", f"{ctype}; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
         self.end_headers()
         self.wfile.write(data)
 

@@ -187,8 +187,8 @@
  {
   "id": "junk.temp.user",
   "category": "windows-junk",
-  "risk": "low",
-  "default": true,
+  "risk": "high",
+  "default": false,
   "name": "User temporary files (%TEMP%)",
   "files": [
    {
