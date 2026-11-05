@@ -152,6 +152,11 @@ function renderScan(results) {
     });
     tb.appendChild(tr);
   }
+  let items = 0, bytes = 0;
+  for (const o of results) { items += o.items; bytes += o.bytes; }
+  $("sum-items").textContent = items.toLocaleString();
+  $("sum-bytes").textContent = bytes ? human(bytes) : "—";
+  $("scan-foot").hidden = results.length === 0;
 }
 
 function selectedIds() {
@@ -190,6 +195,7 @@ async function doScan() {
     btn.textContent = `扫描中… ${Math.floor((Date.now() - t0) / 1000)}s`;
   }, 1000);
   $("scan-body").innerHTML = `<tr><td colspan="5" class="empty">扫描中……（临时目录较大时需一两分钟）</td></tr>`;
+  $("scan-foot").hidden = true;
   notice("scan-note", "");
   $("health-stamp").hidden = true;
   $("k-scan-items").textContent = "—";

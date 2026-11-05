@@ -96,6 +96,11 @@ table.ledger{width:100%;border-collapse:collapse;margin-top:var(--s1)}
 #scan-table th:nth-child(3){width:96px}
 #scan-table th:nth-child(4){width:104px}
 #scan-table th:nth-child(5){width:34%}
+/* 合计行：账簿的「结总」，不做斑马纹，只加一道粗横线 */
+#scan-foot td{border-top:2px solid var(--ink);border-bottom:none;
+  background:var(--paper2);padding-top:10px;padding-bottom:10px;
+  font-size:13px;letter-spacing:.06em;color:var(--ink2)}
+#scan-foot td.n{color:var(--ink);font-size:17px}
 
 /* ---- 印章 ---- */
 .stamp{display:inline-block;border:2px solid var(--cinnabar);color:var(--cinnabar);
@@ -282,6 +287,15 @@ dialog .btnrow{justify-content:flex-end;margin-top:var(--s2)}
   #scan-table td:nth-child(5){grid-column:2/4;grid-row:3}
   #scan-table td:nth-child(5)::before{content:""}
   #scan-table td[data-l]::before{content:attr(data-l) " ";color:var(--ink2);font-size:12px}
+
+  /* 合计行：窄屏下 td 变成 grid item，colspan 不生效，显式排三列 */
+  #scan-table tfoot tr{display:grid;grid-template-columns:1fr auto auto;
+    column-gap:var(--s2);border-top:2px solid var(--ink);padding:10px 0;align-items:baseline}
+  #scan-table tfoot td{border:0;background:transparent;padding:0}
+  #scan-table tfoot td:nth-child(1){grid-column:1}
+  #scan-table tfoot td:nth-child(2){grid-column:2;text-align:right}
+  #scan-table tfoot td:nth-child(3){grid-column:3;text-align:right}
+  #scan-table tfoot td:nth-child(4){display:none}
 
   /* 销账表：单选占一列 */
   #undo-table tbody tr{display:grid;grid-template-columns:26px minmax(0,1fr);
