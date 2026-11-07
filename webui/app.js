@@ -12,6 +12,9 @@ try {
 } catch (e) {
   TOKEN = new URLSearchParams(location.search).get("t") || "";
 }
+/* 在线演示（GitHub Pages）：demo.js 在非本机地址注入静态样本数据；
+   本机 127.0.0.1 下该文件不生效，行为与真实引擎完全一致。 */
+const DEMO = !!window.OPENSWEEP_DEMO;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g,
   (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
@@ -24,6 +27,14 @@ const human = (n) => {
 };
 
 async function api(name, opts) {
+  if (DEMO) {
+    if (opts && opts.method === "POST") {
+      throw new Error("在线演示为只读样本：清理 / 加固 / 销账需在本机运行 python server.py");
+    }
+    const key = name.split("?")[0];
+    if (!(key in window.OPENSWEEP_DEMO)) throw new Error(`演示数据未覆盖：${key}`);
+    return JSON.parse(JSON.stringify(window.OPENSWEEP_DEMO[key]));
+  }
   let r;
   try {
     r = await fetch(`/api/${name}`, {
@@ -801,6 +812,13 @@ $("rule-q").addEventListener("keydown", (e) => {
 let PLATFORM = "unknown";
 async function boot() {
   initSpy();
+  if (DEMO) {
+    $("health-note").textContent = "在线演示：以下为静态样本数据，不是本机扫描结果。";
+    $("rp-label").hidden = false;
+    loadHealth();
+    loadHarden();
+    return;
+  }
   if (!(location.protocol === "http:" && location.hostname === "127.0.0.1")) {
     $("health-note").textContent =
       "当前以 file:// 直接打开——请通过 server.py 打印的 http://127.0.0.1 地址访问。";
