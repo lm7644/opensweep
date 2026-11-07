@@ -1,0 +1,12 @@
+OpenSweep
+=========
+
+This project is licensed under the MIT License; see LICENSE.
+
+Additional notice
+-----------------
+
+OpenSweep is a clean-room implementation. It contains no code, assets, or rule
+text from any commercial product. Cleaning-rule locations are public forensic
+facts. All product names mentioned in the documentation are trademarks of
+their respective owners and are used for identification only.

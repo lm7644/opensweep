@@ -65,4 +65,4 @@ CI runs the sandboxed safety suite on **windows-latest + macos-latest** (Python 
 `FEATURES.md`（功能对照）/ `BENCHMARK.md`（竞品评分，算式透明）/ `REVIEW.md`（对抗式复查）/ `ECOSYSTEM.md`（组合与借鉴生态）/ `tests/`（安全测试套件）
 
 ### License
-MIT — see [LICENSE](LICENSE). Clean-room notice included therein.
+MIT — see [LICENSE](LICENSE). Clean-room notice in [NOTICE](NOTICE).
