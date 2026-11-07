@@ -13,7 +13,7 @@ v3.1 新增：`report`（自包含 HTML 审计报告）、`dupes`（重复文件
 
 三种前端：CLI（`opensweep.py`）/ 暗色桌面 GUI（`gui.py`）/ 账本风本地 Web UI（`server.py` → http://127.0.0.1）。规则库为声明式 JSON（`rules-windows.json` / `rules-darwin.json` / `harden.json`），按平台加载。
 
-> **在线演示**：[https://raw.githack.com/lm7644/opensweep/main/webui/index.html](https://raw.githack.com/lm7644/opensweep/main/webui/index.html) —— 账本 Web UI 的静态样本页，数字为演示数据，不是本机扫描结果；真实清理仍需本机运行 `python server.py`。
+> **在线演示**：[https://lm7644.github.io/opensweep/](https://lm7644.github.io/opensweep/) —— GitHub Pages 上的账本 Web UI 静态样本页；页面数字为演示数据，不是本机扫描结果，真实清理仍需本机运行 `python server.py`。
 
 > OpenSweep 为洁室实现：不含任何商业产品的代码、资产或规则文本；清理目标位置均为公开取证事实。与任何商业清理器无关。
 
@@ -45,7 +45,7 @@ python tests/test_suite.py         # 沙箱安全测试（清单哈希 + 多轮 
 <a id="english"></a>
 ## English
 
-> **Live demo**: [https://raw.githack.com/lm7644/opensweep/main/webui/index.html](https://raw.githack.com/lm7644/opensweep/main/webui/index.html) — static sample of the ledger Web UI. Numbers are demo data, not a scan of your machine; run `python server.py` locally for real cleaning.
+> **Live demo**: [https://lm7644.github.io/opensweep/](https://lm7644.github.io/opensweep/) — static sample of the ledger Web UI on GitHub Pages. Numbers are demo data, not a scan of your machine; run `python server.py` locally for real cleaning.
 
 A privacy trace cleaner for Windows & macOS (clean-room implementation). **Zero dependencies** (Python 3.10+ stdlib only), **no outbound traffic from the app** (winget runs only when you open the updates page; the maintainer-only `upload_to_github.py` talks to the GitHub API), **read-only by default**, and **everything reversible** via journals. Credential stores (Login Data / Bookmarks) are invisible to every rule.
 
