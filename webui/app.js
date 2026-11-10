@@ -144,7 +144,7 @@ function loadHealth() {
     $("k-journals").textContent = h.journals;
     const st = h.admin ? "管理员会话" : "普通权限（管理员项将跳过）";
     $("health-note").textContent = `引擎规则 ${h.rules} 条，${st}`;
-    $("edition").textContent = `No.${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-v3.1`;
+    $("edition").textContent = `No.${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-v3.2`;
     loadJournals();
   }).catch((e) => {
     $("health-note").textContent = `台账读取失败：${e.message}`;
@@ -717,6 +717,45 @@ async function doUndo() {
   loadJournals(); loadHealth(); loadHarden();
 }
 
+async function doPurge() {
+  const btn = $("btn-purge");
+  let s;
+  try {
+    s = await api("purge");
+  } catch (e) {
+    await confirmBox({title: "读取撤销区失败", body: e.message, info: true, okText: "知道了", danger: true});
+    return;
+  }
+  if (!s.journals && !s.files) {
+    await confirmBox({title: "撤销区已空", body: "没有可清空的备份。", info: true, okText: "知道了"});
+    return;
+  }
+  const ok = await confirmBox({
+    title: "清空撤销区",
+    body: `撤销区存有 ${s.journals} 份 journal、${s.files} 个文件（${human(s.bytes)}）。`,
+    warn: "撤销区里是<b>已清理痕迹的明文副本</b>。清空会永久删除这些备份，之后任何清理都<b>无法再撤销</b>。只有确定不再需要还原时才清空。",
+    foot: `位置：${s.root}`,
+    danger: true,
+    ack: "我知道清空后无法再撤销任何清理，仍要永久删除这些备份。",
+    okText: "永久清空",
+  });
+  if (!ok) return;
+  btn.disabled = true;
+  busy(btn, true, "清空中…");
+  try {
+    const r = await api("purge", {method: "POST", body: JSON.stringify({confirm: true})});
+    stampFly("焚");
+    let msg = `已清空 ${r.journals} 份 journal、${r.files} 个文件（${human(r.bytes)}）。`;
+    if (r.failed) msg += `\n${r.failed} 项被占用未能删除，请关闭相关程序后重试。`;
+    await confirmBox({title: "清空完成", body: msg, info: true, okText: "知道了"});
+    loadJournals(); loadHealth();
+  } catch (e) {
+    await confirmBox({title: "清空失败", body: e.message, info: true, okText: "知道了", danger: true});
+  }
+  btn.disabled = false;
+  busy(btn, false);
+}
+
 /* ---------- 重复快查 ---------- */
 async function loadDupes() {
   const dir = $("dupes-dir").value.trim();
@@ -783,6 +822,7 @@ $("app-q").addEventListener("keydown", (e) => { if (e.key === "Enter") loadApps(
 $("btn-updates").onclick = loadUpdates;
 $("btn-tools").onclick = loadTools;
 $("btn-undo").onclick = doUndo;
+$("btn-purge").onclick = doPurge;
 $("btn-dupes").onclick = loadDupes;
 
 /* 首屏主操作：滚到清理区再开扫，让用户立刻看到加载态与结果 */

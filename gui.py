@@ -18,7 +18,7 @@ from tkinter import messagebox, ttk
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import opensweep as engine
 
-APP = "OpenSweep v3.1"
+APP = "OpenSweep v3.2"
 
 # ---- design tokens -------------------------------------------------------
 BG      = "#14161a"   # window
@@ -112,7 +112,7 @@ class App:
         head = tk.Frame(self.root, bg=BG)
         head.pack(fill="x", padx=18, pady=(14, 6))
         tk.Label(head, text="OpenSweep", bg=BG, fg=FG, font=FONT_H).pack(side="left")
-        pill = tk.Label(head, text=" v3.1 ", bg=PANEL2, fg=MUTE, font=FONT_S)
+        pill = tk.Label(head, text=" v3.2 ", bg=PANEL2, fg=MUTE, font=FONT_S)
         pill.pack(side="left", padx=(10, 6), pady=4)
         tk.Label(head, text="零网络 · 默认只读 · 全程可撤销", bg=BG, fg=MUTE,
                  font=FONT_S).pack(side="left", padx=2)
@@ -162,13 +162,6 @@ class App:
         c = tk.Frame(page, bg=PANEL, highlightbackground=BORDER, highlightthickness=1)
         c.pack(fill="both", expand=True, padx=2, pady=2)
         return c
-
-    def _row(self, parent, **kw):
-        r = tk.Frame(parent, bg=parent["bg"])
-        r.pack(fill="x", padx=10, pady=8)
-        for k, v in kw.items():
-            pass
-        return r
 
     def _tree(self, parent, cols, widths):
         tv = ttk.Treeview(parent, columns=cols, show="headings")
@@ -309,8 +302,10 @@ class App:
         if not exposed:
             messagebox.showinfo(APP, "没有 exposed 项。\n管理员项请在管理员终端运行 harden --yes。")
             return
-        if not messagebox.askyesno(APP, f"将加固 {len(exposed)} 项 Windows 隐私设置。\n"
-                                        "先备份注册表，可撤销。\n\n" + "\n".join(exposed) + "\n\n继续？"):
+        if not messagebox.askyesno(APP, "将加固所有当前未加固（exposed）的 Windows 隐私设置。\n"
+                                        "先备份注册表，可撤销。\n\n"
+                                        "上次扫描发现的 exposed 项（实际以应用时的实时读取为准）：\n"
+                                        + "\n".join(exposed) + "\n\n继续？"):
             return
 
         def work():
@@ -458,6 +453,7 @@ class App:
         ttk.Button(bar, text="列出 journal", command=self.do_undo_list).pack(side="left", padx=4)
         ttk.Button(bar, text="撤销选中 journal", style="Accent.TButton",
                    command=self.do_undo).pack(side="left", padx=4)
+        ttk.Button(bar, text="清空撤销区（不可逆）", command=self.do_purge).pack(side="left", padx=4)
         self.tv_undo = self._tree(self._card(f), ("journal", "写入时间", "大小"),
                                   (360, 180, 100))
 
@@ -493,6 +489,36 @@ class App:
         def done(jp):
             messagebox.showinfo(APP, f"撤销完成：{Path(jp).name}")
             self.status.set("撤销完成")
+            self.do_undo_list()
+
+        self._run(work, done, "撤销中……")
+
+    def do_purge(self):
+        s = engine.undo_area_summary()
+        if s["journals"] == 0 and s["files"] == 0:
+            messagebox.showinfo(APP, "撤销区已经是空的。")
+            return
+        if not messagebox.askyesno(
+                APP, f"撤销区存有 {s['journals']} 份 journal、{s['files']} 个文件（{human(s['bytes'])}）。\n"
+                     f"位置：{s['root']}\n\n"
+                     "撤销区里是已清理痕迹的明文副本。清空将永久删除这些备份，\n"
+                     "之后任何清理都无法再撤销。确定不再需要还原时才清空。\n\n继续？"):
+            return
+        if not messagebox.askyesno(APP, "再次确认：永久清空撤销区，放弃所有撤销能力？"):
+            return
+
+        def work():
+            return engine.purge_undo(shred=False)
+
+        def done(r):
+            msg = f"已清空：{r['journals']} 份 journal、{r['files']} 个文件（{human(r['bytes'])}）。"
+            if r["failed"]:
+                msg += f"\n{r['failed']} 项被占用未能删除，请关闭相关程序后重试。"
+            messagebox.showinfo(APP, msg)
+            self.status.set("撤销区已清空（不可逆）")
+            self.do_undo_list()
+
+        self._run(work, done, "清空撤销区中……")
 
 
 def main():

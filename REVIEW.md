@@ -1,4 +1,4 @@
-# OpenSweep v1.0 复查报告 与 v1.1 修订记录 + 开发价值评估
+# OpenSweep 对抗式复查记录（v1.0→v1.1→v3.2）+ 开发价值评估
 
 复查日期：2026-10-31 ｜ 方法：全文重读推演 + 独立交叉验证（不经被测代码）+ 对照 ccleaner.ini 规则库原文
 
@@ -64,3 +64,39 @@
 - **可选低成本项**（每项 ≤ 半天）：单文件粉碎器（TRIM 诚实文档化）；启动项 Run 键禁用（备份语义现成）；`--json` 报告落盘作审计留痕。
 - **不建议**：Driver Updater/软件更新器/性能优化器复刻——商业数据库依赖，无差异化；GUI 化。
 - **长期形态**：把规则库抽为独立 JSON + 语法文档，作为"Windows 隐私痕迹位置知识库"留存，比继续堆功能更有价值。
+
+---
+
+## 五、v3.2 安全审计与修订记录（2026-11-09）
+
+方法：全文重读 + 沙箱套件回归 + 本机引擎实测 + Web UI 浏览器端到端验证。上文 v1.0/v1.1 章节为历史快照（其中「41 规则」是 v1.1 当时的真实数字，未改写）；本节记录当前 45 规则引擎的审计与修复。
+
+### 已修复
+
+| # | 严重度 | 问题 | 修复 | 验证 |
+|---|---|---|---|---|
+| P1 | **高** | 撤销区明文留存全部「已清理」痕迹，且无清空手段——清理后痕迹只是换地方存放 | 新增 `undo_area_summary`/`purge_undo`/`_shred_file` + CLI `purge`（`--yes`/`--shred`）+ server `/api/purge`（confirm 门控）+ GUI/Web UI 按钮 | 沙箱 purge 实测清空；浏览器端到端（预览→勾选风险确认→清空→列表归零→磁盘为空） |
+| D1 | **高** | `UNDO_ROOT` 仅读 `TEMP`，macOS（设 `TMPDIR` 而非 `TEMP`）会落到错误的相对路径 | 依次取 `TEMP`/`TMP`/`TMPDIR`/`tempfile.gettempdir()` | 沙箱注入仍生效，安全套件 41/41 |
+| P4 | **高** | 注册表项可能在备份未验证时就被删除（不可逆） | `reg_export` 失败或备份不存在即跳过该项，绝不无备份删除 | 安全套件回归 |
+| GUI-undo | **高**（本轮新发现） | `gui.py do_undo` 定义了 work/done 却从未调用 `_run`——「撤销选中」确认后静默无动作 | 补上 `self._run(work, done, …)`，完成后刷新列表 | GUI selftest；与其余 handler 同构 |
+| P2 | 中 | SQLite 行删除后数据仍在 freelist，可被恢复 | commit 后 best-effort `VACUUM`（持锁失败不影响行删除） | 饱和套件 S9 活锁 WAL 仍 41/41 |
+| purge-ro | **高**（本轮新发现） | Windows 只读属性使 `purge` 无法删除只读备份（实测 failed=3，痕迹残留），且 `_shred_file` 先 unlink 再覆写会落空 | 新增 `_force_writable`（删前 `chmod`）；`_shred_file` 改为原地覆写+`fsync` 不 unlink；`purge_undo` 对每个条目先去只读再 rmtree/unlink | 饱和套件 S19 八项全过、failed=0；只读探针文件确从磁盘消失 |
+| P8 | 中 | `create_restore_point` 描述串接进 PowerShell `-Command`，未来调用方可注入 | 描述消毒（仅留 `A-Za-z0-9 _.-`，截断 120） | 编译 + 套件 |
+| D2 | 中 | server `dupes` 的 `min` 接受 NaN/负数/inf/非数字 | 校验有限且 ≥0，非法返回 400 | 实测 nan/-5/abc/inf 均 400 |
+| 令牌 | 中 | server 令牌用 `==` 比较（非常量时间）；无 Host 校验（DNS 重绑定面） | `hmac.compare_digest`（bytes）+ Host 头仅许 loopback | selftest 10/10；rebind Host→403 |
+| P5 | 中 | 发布脚本令牌进 curl argv（进程列表可见）；不排除密钥文件 | 令牌经 `--config -` 走 stdin（不落盘不进 argv），payload 走临时文件；排除 `.env*`/`*.pem`/`*.key`/`*.token`/`credentials.json`/`secrets.json` 等 | 假令牌 401 证传输正确；排除测试；临时文件清理测试 |
+| D3 | 低 | GUI 加固确认文案暗示「仅加固所列项」，实际引擎实时读取并加固全部 exposed | 文案改为「所有当前未加固项，以应用时实时读取为准」 | 文案核对 |
+| 性能 | 低 | `startup_report` 服务计数 O(n²) | 计数器上限 200 | 套件回归 |
+| 死代码 | 低 | `gui._row` 全未使用（含 no-op 循环） | 整体删除 | GUI selftest |
+| 文档 | 低 | 版本/计数/评分陈旧（BENCHMARK 结论 5.6/9.0 与自身算式 6.7/8.7 矛盾等） | 全量勘误 + 版本统一 v3.2 + README 重新定位（痕迹+垃圾）+ 隐私边界节 | 人工核对 |
+
+### 未处理（及原因）
+
+- **P3 整库备份连带敏感表**：SQLite 为「整笔可还原」备份整库，必然连带同库其它表。改为表级备份会破坏 undo 契约；已在 README 隐私边界声明，`purge` 会销毁这些备份。
+- **P7 凭据保护按文件名**：覆盖任意文件名需内容识别（误报风险、超出零依赖定位）；已声明为标准位置+文件名保护。
+- **D4 undo 可能覆盖清理后新建的同名文件**：低风险；改动 move/copy 语义反而可能破坏还原可靠性，维持现状并文档化。
+- **`reg_tree_values` 双开键**：性能影响可忽略，重构风险大于收益，不动。
+
+### 回归结果（Windows 10 / Python 3.13）
+
+安全套件 **41/41** · 饱和套件 **41/41**（本轮新增 S19 purge 八项）· server 自检 **10/10** · GUI `--selftest` **OK** · Web UI 浏览器实测 purge 全流程无控制台错误。macOS 以 CI `macos-latest` 矩阵为准。

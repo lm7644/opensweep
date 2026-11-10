@@ -19,6 +19,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -28,24 +29,41 @@ ROOT = Path(__file__).resolve().parent
 REPO_DESC = ("Clean-room privacy trace cleaner for Windows & macOS. "
              "Zero dependencies, zero network, everything reversible.")
 EXCLUDE_PARTS = {".git", "__pycache__", "sandbox", "satbox"}
-EXCLUDE_SUFFIX = {".pyc", ".log"}
+EXCLUDE_SUFFIX = {".pyc", ".log", ".pem", ".key", ".token", ".p12", ".pfx"}
+EXCLUDE_NAMES = {"credentials.json", "secrets.json", ".env", ".netrc", ".npmrc", ".pypirc"}
 
 def api(method, path, token, payload=None, raw=False, _retry=0):
     """GitHub API call via curl.exe (Schannel/Windows trust store - robust
-    behind local proxies that break Python's OpenSSL chain validation)."""
-    cmd = [CURL, "-sS", "-X", method, API + path,
-           "-H", f"Authorization: Bearer {token}",
-           "-H", "Accept: application/vnd.github+json",
-           "-H", "User-Agent: opensweep-uploader",
+    behind local proxies that break Python's OpenSSL chain validation).
+
+    The token is fed to curl through --config on stdin so it never appears in
+    argv (visible to other local processes via the process list) and never
+    touches disk. The JSON payload, when present, goes through a temp file so
+    stdin stays reserved for the token-bearing config."""
+    config = (f'url = "{API + path}"\n'
+              f'request = "{method}"\n'
+              f'header = "Authorization: Bearer {token}"\n'
+              'header = "Accept: application/vnd.github+json"\n'
+              'header = "User-Agent: opensweep-uploader"\n')
+    cmd = [CURL, "-sS", "--config", "-",
            "--ssl-no-revoke", "--connect-timeout", "20",
            "--max-time", "120", "--retry", "2", "--retry-delay", "3",
            "-w", "\n%{http_code}"]
-    stdin_data = None
+    tmp = None
     if payload is not None:
-        cmd += ["-d", "@-"]
-        stdin_data = json.dumps(payload)
-    r = subprocess.run(cmd, capture_output=True, text=True,
-                       encoding="utf-8", errors="replace", input=stdin_data)
+        fd, tmp = tempfile.mkstemp(suffix=".json", prefix="opensweep-upload-")
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh)
+        cmd += ["-d", "@" + Path(tmp).as_posix()]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", input=config)
+    finally:
+        if tmp:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
     out = r.stdout.rsplit("\n", 1)
     body_text = out[0] if len(out) == 2 else ""
     try:
@@ -70,6 +88,8 @@ def collect_files(skip_workflows=False):
         if not f.is_file():
             continue
         if parts & EXCLUDE_PARTS or f.suffix in EXCLUDE_SUFFIX:
+            continue
+        if f.name in EXCLUDE_NAMES or f.name.startswith(".env."):
             continue
         if skip_workflows and ".github" in f.relative_to(ROOT).parts:
             continue
@@ -158,11 +178,11 @@ def main():
         "tree": tree, "base_tree": base_tree})
     if code != 201:
         print(f"tree failed ({code})"); sys.exit(1)
-    msg = ("OpenSweep v3.0.0 - clean-room privacy trace cleaner\n\n"
+    msg = ("OpenSweep v3.2.0 - clean-room privacy & junk cleaner\n\n"
            "Windows + macOS. Zero dependencies, zero network, fully reversible.\n"
            "Includes: 45+11 declarative rules, 15-item Windows hardening,\n"
-           "ledger web UI, desktop GUI, CLI, sandboxed safety suite (37/37),\n"
-           "saturation suite (33/33), CI matrix (windows/macos x py3.10/3.12).")
+           "ledger web UI, desktop GUI, CLI, undo-area purge, sandboxed safety\n"
+           "suite (41/41), saturation suite (41/41), CI matrix (windows/macos x py3.10/3.12).")
     code, commit = api("POST", f"/repos/{full}/git/commits", token, payload={
         "message": msg, "tree": tree_res["sha"], "parents": [head_sha]})
     if code != 201:
@@ -207,7 +227,7 @@ def main():
         concl = j.get("conclusion") or j.get("status")
         allpass &= (concl == "success")
         print(f'  [{concl:>9}] {j["name"]}')
-    print("\nFINAL:", "ALL GREEN - release v3.0.0 when ready" if allpass
+    print("\nFINAL:", "ALL GREEN - release v3.2.0 when ready" if allpass
           else "SOME JOBS FAILED - see the Actions tab for logs")
     print(f"repo: https://github.com/{full}")
 

@@ -8,7 +8,7 @@
 - [x] `rules-windows.json`（45 条，Windows）｜ `rules-darwin.json`（11 条，macOS）
 - [x] `harden.json`（15 项 Windows 隐私设置加固）
 - [x] `webui/`（账本设计前端：index/styles/app）
-- [x] `tests/`（test_suite.py 跨平台安全套件 + server_selftest.py）
+- [x] `tests/`（test_suite.py 跨平台安全套件 + test_saturation.py 对抗饱和套件 + server_selftest.py）
 - [x] `README.md`（双语）｜ `LICENSE`（MIT + 洁室声明）｜ `.gitignore` ｜ `.github/workflows/ci.yml`
 - [x] 文档：`FEATURES.md` / `BENCHMARK.md` / `REVIEW.md` / `ECOSYSTEM.md` / `design-demos/`（含 direction-approved.md，体现流程可复用）
 
@@ -24,13 +24,13 @@
 
 1. `git init` 于 opensweep/ → 首次提交前 `git status` 逐文件核对上述排除项
 2. 推送 GitHub → 确认 Actions 双平台（windows/macos × py3.10/3.12）全绿
-3. 建立 v3.0.0 tag + Release Notes（引用 BENCHMARK 的诚实评分与安全测试矩阵）
-4. README 顶部加 CI badge：`![ci](https://github.com/<user>/<repo>/actions/workflows/ci.yml/badge.svg)`
+3. 建立 v3.2.0 tag + Release Notes（引用 BENCHMARK 的诚实评分与安全测试矩阵）
+4. README 顶部加 CI badge：`![ci](https://github.com/lm7644/opensweep/actions/workflows/ci.yml/badge.svg)`（v3.2 已加）
 5. 首个外部 issue 模板建议：报告清理误伤时附 journal（脱敏后）
 
 ## 🧪 双平台验证状态（诚实声明）
 
-- Windows 10/11 x64：本机全量实测（沙箱套件 37/37×2、server 9/9、GUI、真机演练 5/5）
+- Windows 10/11 x64：本机全量实测（安全套件 41/41、饱和套件 41/41、server 自检 10/10、GUI、Web UI 浏览器实测、真机演练 5/5）
 - macOS：代码路径完成（平台守卫 + darwin 规则集 + 跨平台套件），**验证依赖 CI 的 macos-latest 矩阵**——首次推送后务必查看 Actions 结果；真机 Safari/Edge 路径以 CI 为准
 - Linux：可运行引擎核心（文件/SQLite 规则），无内置规则集，欢迎社区贡献 `rules-linux.json`
 

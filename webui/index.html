@@ -15,7 +15,7 @@
   <header class="mast reveal">
     <div class="mast-row">
       <h1>OpenSweep 账本</h1>
-      <span class="no" id="edition">No.20261105-v3.1</span>
+      <span class="no" id="edition">No.20261105-v3.2</span>
     </div>
     <p class="tagline">清掉这台电脑上可清理的临时文件与使用痕迹——默认只看不动手。</p>
     <div class="hero">
@@ -214,8 +214,10 @@
       </table>
       <div class="btnrow">
         <button class="seal" id="btn-undo" disabled>划销还原</button>
+        <button class="ink" id="btn-purge" type="button">清空撤销区</button>
         <span class="hint" id="undo-hint"></span>
       </div>
+      <p class="rule-note">「清空撤销区」会永久删除所有备份（已清理痕迹的明文副本），之后无法再撤销任何清理；确定不再还原时才用。</p>
     </section>
 
   </main>

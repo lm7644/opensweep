@@ -12,12 +12,12 @@
 
 | # | CCleaner 功能 | 逆向证据 | OpenSweep | 说明 |
 |---|---|---|---|---|
-| 1 | Custom Clean（Windows/应用清理） | `ccleaner.ini` 769 节规则语法 `ID/Default/ActiveProcesses/FileKey/RegKey/OnFile处理器` | ✅ | 45 条自撰规则（v3.1 当前 `rules-windows.json`）；覆盖 §3.2 所列隐私面（MRU 全套含 Jump Lists/Cookie 行级删/历史/缓存/垃圾） |
+| 1 | Custom Clean（Windows/应用清理） | `ccleaner.ini` 769 节规则语法 `ID/Default/ActiveProcesses/FileKey/RegKey/OnFile处理器` | ✅ | 45 条自撰规则（v3.2 当前 `rules-windows.json`）；覆盖 §3.2 所列隐私面（MRU 全套含 Jump Lists/Cookie 行级删/历史/缓存/垃圾） |
 | 2 | Cookie 选择性删除 + 站点白名单 | `CookiesSQLite3DB` 处理器、`#SelCookies/#DelCookies`、`CookiesAllowedList` | ✅ | `DELETE FROM cookies WHERE NOT (host LIKE …)` + `--keep-cookies` |
 | 3 | 进程守卫（清理前等/关浏览器） | 规则字段 `ActiveProcesses=msedge.exe` | ✅ | `needs_close` + tasklist 检测，浏览器运行即跳过 |
 | 4 | Health Check（清理/隐私/速度/安全四项） | `HealthCheckPrivacy.*` 代码模型 | ⚠️ | `scan` 命令= 只读扫描汇总（垃圾+追踪器+痕迹）；"速度/安全"依赖驱动/软件更新引擎，不复刻 |
 | 5 | Cookie/历史/缓存/会话/表单清理 | 149 个隐私相关规则节 | ✅ | Edge/Chrome/Firefox；表单信息默认关、**密码清理根本不实现**（安全减法） |
-| 6 | 操作回退 | 仅 Registry Cleaner 有备份（`data\RegistryBackup\`） | ✅ 超集 | **一切变更可撤销**：文件移入 undo 目录、注册表先 reg export、SQLite 先整库备份，`undo <journal>` 一键还原 |
+| 6 | 操作回退 | 仅 Registry Cleaner 有备份（`data\RegistryBackup\`） | ✅ 超集 | **一切变更可撤销**：文件移入 undo 目录、注册表先 reg export、SQLite 先整库备份，`undo <journal>` 一键还原；v3.2 新增 `purge` 永久清空撤销区（三端可用，CLI `--shred` 覆写） |
 | 7 | 默认安全位 | `Default=True/False` 字段 | ✅ | 复刻其 Default 语义且更保守：`session/autofill/recyclebin/streams/traynotify` 默认关 |
 | 8 | Registry Cleaner（17 类"无效项"） | `winreg` 规则组（部分混淆存储） | ⚠️ 降级 | 只做**痕迹清理**（MRU），不做"无效共享DLL/文件扩展"等启发式删除——风险收益比差（与本审计报告 §7 结论一致） |
 | 9 | 计划任务清理 | Scheduler/CTaskScheduler 符号 | ⚠️ | 用 Windows 自带 schtasks 注册 OpenSweep CLI 定时扫描（README 给出命令） |
@@ -36,7 +36,7 @@
 
 ## 与原版的安全设计差异（OpenSweep 增强项）
 
-| 维度 | CCleaner 7.13 | OpenSweep v3.1 |
+| 维度 | CCleaner 7.13 | OpenSweep v3.2 |
 |---|---|---|
 | 默认模式 | GUI 勾选即执行 | **dry-run 默认**，`--yes` 显式执行 |
 | 可撤销性 | 仅注册表清理有备份 | **全操作日志化**（文件/注册表/SQLite 三类均可 `undo`） |

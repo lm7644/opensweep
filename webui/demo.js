@@ -93,6 +93,7 @@
       {name: "20261106-214203.json", mtime: 1794049323, size: 4812},
       {name: "20261105-101517.json", mtime: 1793950517, size: 12640}
     ]},
+    purge: {root: "C:\\Users\\Demo\\AppData\\Local\\Temp\\OpenSweepUndo", journals: 2, files: 24, bytes: 4812000},
     rules: {rules: []},
     dupes: {groups: []}
   };

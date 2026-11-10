@@ -36,8 +36,10 @@ import os
 import re
 import shutil
 import sqlite3
+import stat
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -48,8 +50,12 @@ if IS_WIN:
 else:  # registry layer is Windows-only; macOS uses the file/sqlite ruleset
     winreg = None
 
-TOOL = "OpenSweep v3.1"
-UNDO_ROOT = Path(os.environ.get("TEMP", r"C:\Temp")) / "OpenSweepUndo"
+TOOL = "OpenSweep v3.2"
+# Honour TEMP/TMP (Windows, and the sandboxed tests) then TMPDIR (macOS/Linux),
+# falling back to the platform temp dir. The old TEMP-only lookup left macOS
+# (which sets TMPDIR, not TEMP) writing the undo area to a bogus relative path.
+UNDO_ROOT = Path(os.environ.get("TEMP") or os.environ.get("TMP")
+                 or os.environ.get("TMPDIR") or tempfile.gettempdir()) / "OpenSweepUndo"
 
 # --------------------------------------------------------------------------
 # small helpers
@@ -486,6 +492,13 @@ def apply_rule(rule, browsers_running, keep_cookies, journal, dry=False):
                     except sqlite3.Error as e:
                         res["skipped"].append(f"{Path(db).name}:{t['table']}: {e}")
                 con.commit()
+                # Reclaim freelist pages so deleted rows aren't recoverable from
+                # the live DB. Best-effort: a live holder (open browser) pins a
+                # lock and VACUUM fails — the row delete above still stands.
+                try:
+                    con.execute("VACUUM")
+                except sqlite3.Error:
+                    pass
                 con.close()
                 journal.entries.append({"type": "db", "original": db,
                                         "backup": str(bak)})
@@ -502,7 +515,11 @@ def apply_rule(rule, browsers_running, keep_cookies, journal, dry=False):
         full = f"{HKEY_NAMES[hive]}\\{subkey}"
         bak = journal.dir / "reg" / (subkey.replace("\\", "_") + ".reg")
         bak.parent.mkdir(parents=True, exist_ok=True)
-        reg_export(full, bak)
+        if not reg_export(full, bak) or not bak.exists():
+            # No verified backup means deleting would be irreversible; skip
+            # rather than break the "everything is undoable" contract.
+            res["skipped"].append(f"{subkey}: registry export failed; left untouched")
+            continue
         mode = spec["mode"]
         if mode == "delete_key":
             n = reg_count_values((hive, subkey))
@@ -591,6 +608,91 @@ def undo_journal(jpath):
             fail += 1
             log(f"  undo failed for {e.get('original', e.get('key'))}: {ex}")
     log(f"undo complete: {ok} restored, {fail} failed")
+
+# --------------------------------------------------------------------------
+# purge: the undo area is the one place "cleaned" traces survive in plaintext.
+# Purging deliberately gives up reversibility so those copies stop lingering.
+# --------------------------------------------------------------------------
+
+def undo_area_summary():
+    """Read-only stats of the undo area (journals, files, bytes, location).
+
+    Powers the purge preview so the user sees exactly what permanent deletion
+    would destroy before committing to it.
+    """
+    journals = files = nbytes = 0
+    if UNDO_ROOT.exists():
+        journals = len(list(UNDO_ROOT.glob("*.json")))
+        for p in UNDO_ROOT.rglob("*"):
+            if p.is_file():
+                files += 1
+                try:
+                    nbytes += p.stat().st_size
+                except OSError:
+                    pass
+    return {"root": str(UNDO_ROOT), "journals": journals,
+            "files": files, "bytes": nbytes}
+
+def _force_writable(p):
+    # Backups can inherit a read-only attribute (e.g. cleaned read-only junk);
+    # Windows refuses to overwrite OR delete such files, so clear the bit first.
+    try:
+        os.chmod(p, stat.S_IREAD | stat.S_IWRITE)
+    except OSError:
+        pass
+
+def _shred_file(p):
+    """Best-effort single-pass overwrite IN PLACE (does not unlink).
+
+    SSD wear-leveling and journaling filesystems mean overwriting is NOT a
+    guaranteed secure erase — this raises the bar against casual recovery,
+    not forensic recovery. The caller deletes the file afterwards.
+    """
+    try:
+        _force_writable(p)
+        remaining = p.stat().st_size
+        with open(p, "r+b", buffering=0) as fh:
+            while remaining > 0:
+                chunk = os.urandom(min(1024 * 1024, remaining))
+                fh.write(chunk)
+                remaining -= len(chunk)
+            fh.flush()
+            os.fsync(fh.fileno())
+        return True
+    except OSError:
+        return False
+
+def purge_undo(shred=False):
+    """Permanently destroy the whole undo area (all journals + backups).
+
+    After this, no cleaned trace can be restored. With shred=True, file
+    contents are overwritten before deletion (best-effort, see _shred_file).
+    Returns counts actually destroyed plus any entries that resisted removal.
+    """
+    before = undo_area_summary()
+    failed = 0
+    if UNDO_ROOT.exists():
+        for child in list(UNDO_ROOT.iterdir()):
+            try:
+                if child.is_dir():
+                    for f in child.rglob("*"):
+                        _force_writable(f)
+                        if shred and f.is_file():
+                            _shred_file(f)
+                    _force_writable(child)
+                    shutil.rmtree(child)
+                else:
+                    _force_writable(child)
+                    if shred:
+                        _shred_file(child)
+                    child.unlink()
+            except OSError:
+                failed += 1
+    after = undo_area_summary()
+    return {"journals": before["journals"] - after["journals"],
+            "files": before["files"] - after["files"],
+            "bytes": before["bytes"] - after["bytes"],
+            "failed": failed, "shred": shred, "before": before, "after": after}
 
 # --------------------------------------------------------------------------
 # privacy hardening (Windows settings; registry locations are public facts)
@@ -772,8 +874,9 @@ def startup_report():
                         names.append(winreg.EnumKey(rk, i)); i += 1
                     except OSError:
                         break
+                n_services = 0
                 for sub in names:
-                    if len([x for x in items if x["kind"] == "Service"]) >= 200:
+                    if n_services >= 200:
                         break
                     try:
                         with open_key(winreg.HKEY_LOCAL_MACHINE,
@@ -789,6 +892,7 @@ def startup_report():
                                 continue
                             items.append({"kind": "Service", "where": "HKLM",
                                           "name": sub, "cmd": img[:150]})
+                            n_services += 1
                     except OSError:
                         continue
         except OSError:
@@ -875,6 +979,9 @@ def create_restore_point(description="OpenSweep"):
     OS 24h creation throttle. Returns (ok, note)."""
     if not IS_WIN:
         return False, "restore points are Windows-only"
+    # Strip quotes/metacharacters so the interpolated -Command can never be
+    # injected, even if a future caller passes user-controlled text.
+    description = re.sub(r"[^A-Za-z0-9 _.-]", "", description)[:120] or "OpenSweep"
     try:
         r = subprocess.run(
             ["powershell", "-NoProfile", "-Command",
@@ -1019,10 +1126,35 @@ def main():
     dp.add_argument("--min-mb", type=float, default=10.0)
     rp = sub.add_parser("report", help="self-contained HTML audit report (read-only)")
     rp.add_argument("--out", default=None, help="output html path")
+    pg = sub.add_parser("purge", help="permanently destroy the undo area (give up reversibility)")
+    pg.add_argument("--yes", action="store_true", help="actually purge (default: read-only preview)")
+    pg.add_argument("--shred", action="store_true",
+                    help="overwrite file contents before unlink (best-effort, not forensic-grade)")
+    pg.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
     if args.cmd == "undo":
         undo_journal(args.journal)
+        return
+    if args.cmd == "purge":
+        s = undo_area_summary()
+        if args.json:
+            print(json.dumps(purge_undo(args.shred) if args.yes else s, indent=1, default=str))
+            return
+        log(f"{TOOL} - undo area: {s['root']}")
+        log(f"  {s['journals']} journals, {s['files']} files, {human(s['bytes'])}")
+        if not args.yes:
+            log("\n  WARNING: the undo area holds plaintext copies of everything you cleaned.")
+            log("  Purging permanently destroys them - no clean can be undone afterwards.")
+            log("  Preview only. Add --yes to purge"
+                + (" (--shred overwrites contents first)." if args.shred else "."))
+            return
+        r = purge_undo(args.shred)
+        log(f"\n  purged {r['journals']} journals, {r['files']} files, {human(r['bytes'])}"
+            + (" (contents overwritten)" if args.shred else ""))
+        if r["failed"]:
+            log(f"  {r['failed']} entries could not be removed (locked/in-use); "
+                "close those programs and retry")
         return
     if args.cmd is None:
         ap.print_help()

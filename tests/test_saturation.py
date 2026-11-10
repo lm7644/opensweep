@@ -19,6 +19,13 @@ import tempfile  # noqa: E402
 WS = Path(tempfile.gettempdir()) / "OpenSweepTestRuns"
 SB = WS / "satbox"
 if SB.exists():
+    # Read-only backups (from the read-only junk test) survive a plain rmtree
+    # on Windows and would pollute the next run; clear the attribute first.
+    for _p in SB.rglob("*"):
+        try:
+            os.chmod(_p, 0o777)
+        except OSError:
+            pass
     shutil.rmtree(SB, ignore_errors=True)
 SB.mkdir(parents=True, exist_ok=True)
 
@@ -314,6 +321,34 @@ def s18_protected_names():
     check("credential stores inside junk dirs are invisible",
           not touched and f.exists() and f2.exists())
 
+# ---------------------------------------------------------------- S19 purge
+def s19_purge():
+    print("\n== S19 undo-area purge (irreversible destroy) ==")
+    # Seed a known journal with a real backed-up file so counts are deterministic.
+    jr = engine.Journal()
+    fdir = jr.dir / "files"
+    fdir.mkdir(parents=True, exist_ok=True)
+    secret = fdir / "purge_probe.tmp"
+    payload = b"PLAINTEXT-TRACE-" * 4096
+    secret.write_bytes(payload)
+    jr.entries.append({"type": "file", "original": "x", "backup": str(secret)})
+    jr.save()
+    before = engine.undo_area_summary()
+    check("summary sees the seeded journal", before["journals"] >= 1)
+    check("summary counts the probe file",
+          before["files"] >= 1 and before["bytes"] >= len(payload))
+    res = engine.purge_undo(shred=True)
+    check("purge reports all journals destroyed", res["journals"] == before["journals"])
+    check("purge reports no failures", res["failed"] == 0, f"failed={res['failed']}")
+    check("probe file actually gone from disk", not secret.exists())
+    after = engine.undo_area_summary()
+    check("undo area empty after purge", after["journals"] == 0 and after["files"] == 0)
+    check("UNDO_ROOT has no children left",
+          not list(engine.UNDO_ROOT.iterdir()) if engine.UNDO_ROOT.exists() else True)
+    res2 = engine.purge_undo(shred=False)
+    check("second purge is a safe no-op",
+          res2["journals"] == 0 and res2["files"] == 0 and res2["failed"] == 0)
+
 def main():
     print(f"satbox: {SB}")
     s1_journal_uniqueness()
@@ -327,6 +362,7 @@ def main():
     s13_s17_static()
     s14_locked()
     s18_protected_names()
+    s19_purge()
 
     print("\n" + "=" * 56)
     passed = sum(1 for _, okk, _ in RESULTS if okk)
