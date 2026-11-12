@@ -1,5 +1,5 @@
-/* OpenSweep 账本 UI —— 引擎接线层。所有数据来自本机引擎（127.0.0.1）。
-   纪律：破坏性动作必经 <dialog> 确认，默认焦点落在「取消」；完成后盖「讫」印。 */
+/* OpenSweep 应用前端 —— 引擎接线层。所有数据来自本机引擎（127.0.0.1）。
+   纪律：破坏性动作必经 <dialog> 确认，默认焦点落在「取消」；完成后弹出 Toast。 */
 "use strict";
 
 /* 令牌只存在于内存与 sessionStorage：地址栏里的 ?t= 读入后立刻抹掉，
@@ -52,6 +52,9 @@ async function api(name, opts) {
 }
 
 /* ---------- 对话框：默认焦点在安全项；Esc 也能收尾 ---------- */
+const DLG_ASK = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17h.01"/></svg>`;
+const DLG_WARN = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9.5 16.5H2.5z"/><path d="M12 10v4"/><path d="M12 17.5h.01"/></svg>`;
+const DLG_INFO = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`;
 let lastFocus = null;
 function confirmBox(opt) {
   const d = $("confirm");
@@ -79,7 +82,12 @@ function confirmBox(opt) {
     $("confirm-foot").textContent = opt.foot || "";
     $("confirm-foot").hidden = !opt.foot;
     d.dataset.danger = opt.danger ? "1" : "0";
-    $("confirm-yes").textContent = opt.okText || "用印确认";
+    const ico = $("dlg-ico");
+    const yes = $("confirm-yes");
+    if (opt.info) { ico.className = "dlg-ico info"; ico.innerHTML = DLG_INFO; yes.className = "btn primary"; }
+    else if (opt.danger) { ico.className = "dlg-ico danger"; ico.innerHTML = DLG_WARN; yes.className = "btn danger"; }
+    else { ico.className = "dlg-ico ask"; ico.innerHTML = DLG_ASK; yes.className = "btn primary"; }
+    yes.textContent = opt.okText || "确认";
     $("confirm-no").hidden = !!opt.info;
     /* 危险动作：必须先亲手勾选风险确认，确认键才可用（防误触） */
     const ack = $("confirm-ack");
@@ -124,30 +132,62 @@ function notice(id, msg) {
 function busy(btn, on, text) {
   if (!btn) return;
   btn.setAttribute("aria-busy", on ? "true" : "false");
-  if (on) { btn.dataset.label = btn.dataset.label || btn.textContent; btn.textContent = text || "处理中…"; }
-  else if (btn.dataset.label) { btn.textContent = btn.dataset.label; delete btn.dataset.label; }
+  if (on) {
+    if (!btn.dataset.html) btn.dataset.html = btn.innerHTML;
+    btn.innerHTML = `<span class="spin" aria-hidden="true"></span><span class="btn-label">${esc(text || "处理中…")}</span>`;
+  } else if (btn.dataset.html) {
+    btn.innerHTML = btn.dataset.html; delete btn.dataset.html;
+  }
 }
 
-function stampFly(text) {
+const TOAST_MSG = {
+  "讫": "清理完成，已写入撤销区",
+  "固": "加固完成，注册表已备份",
+  "销": "已按 journal 逆序还原",
+  "焚": "撤销区已清空",
+};
+let toastTimer = null;
+function stampFly(kind) {
   const layer = $("stamp-layer");
   const s = $("stamp-fly");
-  s.textContent = text || "讫";
+  s.textContent = TOAST_MSG[kind] || kind || "完成";
   layer.classList.add("show");
-  setTimeout(() => layer.classList.remove("show"), 950);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => layer.classList.remove("show"), 2600);
 }
 
-/* ---------- 台账 ---------- */
+/* ---------- 概览台账 ---------- */
+function setEngine(ok) {
+  const dot = $("engine-dot"), txt = $("engine-text"), chip = $("engine-chip");
+  if (dot) dot.className = "dot " + (ok ? "ok" : "err");
+  if (txt) txt.textContent = DEMO ? "演示模式" : (ok ? "已连接" : "未连接");
+  if (chip) chip.classList.toggle("err", !ok);
+}
+function setSbIco(state) {
+  const i = $("sb-ico");
+  if (i) i.className = "sb-ico " + (state || "");
+}
 function loadHealth() {
   return api("health").then((h) => {
     $("k-harden").textContent = `${h.harden.hardened}/15`;
-    $("k-harden").className = "n" + (h.harden.exposed ? " warn-text" : " ok-text");
+    $("k-harden").className = "stat-v n" + (h.harden.exposed ? " warn-text" : " ok-text");
     $("k-journals").textContent = h.journals;
-    const st = h.admin ? "管理员会话" : "普通权限（管理员项将跳过）";
-    $("health-note").textContent = `引擎规则 ${h.rules} 条，${st}`;
-    $("edition").textContent = `No.${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-v3.2`;
+    const st = h.admin ? "管理员会话" : "标准用户（管理员项将跳过）";
+    $("health-note").textContent = `就绪 · ${st}`;
+    $("sb-meta").textContent = `引擎规则 ${h.rules} 条`;
+    $("sf-engine").textContent = `引擎 v3.2 · 规则 ${h.rules}`;
+    $("edition").textContent = "v3.2";
+    $("perm-text").textContent = h.admin ? "管理员" : "标准用户";
+    $("perm-badge").classList.toggle("admin", !!h.admin);
+    const hn = $("nav-harden-n");
+    if (h.harden.exposed) { hn.hidden = false; hn.textContent = h.harden.exposed; } else hn.hidden = true;
+    const un = $("nav-undo-n");
+    if (h.journals) { un.hidden = false; un.textContent = h.journals; } else un.hidden = true;
+    setEngine(true); setSbIco("ok");
     loadJournals();
   }).catch((e) => {
     $("health-note").textContent = `台账读取失败：${e.message}`;
+    setEngine(false); setSbIco("err");
   });
 }
 
@@ -266,6 +306,7 @@ function renderScan(results) {
     for (const o of group) { items += o.items; bytes += o.bytes; }
     const gr = document.createElement("tr");
     gr.className = "group";
+    gr.dataset.risk = risk;
     gr.innerHTML = `<td colspan="5"><div class="g-wrap">
       <span class="g-title">${RISK_LABEL[risk]}<span class="rule-note"> · ${RISK_NOTE[risk]}</span></span>
       <span class="g-n">${group.length} 条 · ${items.toLocaleString()} 项${bytes ? " · " + human(bytes) : ""}</span>
@@ -371,7 +412,8 @@ async function doScan() {
   busy(hero, true, "扫描中…");
   const t0 = Date.now();
   const tick = setInterval(() => {
-    btn.textContent = `扫描中… ${Math.floor((Date.now() - t0) / 1000)}s`;
+    const l = btn.querySelector(".btn-label");
+    if (l) l.textContent = `扫描中… ${Math.floor((Date.now() - t0) / 1000)}s`;
   }, 1000);
   $("scan-body").innerHTML = "";
   $("scan-body").appendChild(stateRow("loading", "正在只读扫描本机临时文件与痕迹……（临时目录大时可能要好几分钟，可先去看别的）"));
@@ -478,10 +520,10 @@ async function doClean() {
     body: `将清理 ${sel.ids.length} 条规则，合计 ${sel.items.toLocaleString()} 个条目${sel.bytes ? " / " + human(sel.bytes) : ""}。`,
     warn,
     rows,
-    foot: "文件移入撤销区、注册表先导出备份，可在「销账」里整笔还原。浏览器相关规则在浏览器运行时自动跳过。",
+    foot: "文件移入撤销区、注册表先导出备份，可在「撤销」页整笔还原。浏览器相关规则在浏览器运行时自动跳过。",
     danger: sel.high.length > 0,
     ack: sel.high.length ? "我知道高风险规则会清空整个目录，已关闭正在运行的程序。" : "",
-    okText: "用印清理",
+    okText: "开始清理",
   });
   if (!ok) return;
   const keep = $("keep").value.split(",").map((s) => s.trim()).filter(Boolean);
@@ -555,8 +597,8 @@ async function doHardenApply() {
     title: "加固确认",
     body: `将加固 ${exposed.length} 项 Windows 隐私设置。`,
     rows: exposed.map((id) => ({label: id, value: "exposed → hardened"})),
-    foot: "先备份注册表，可在「销账」里整笔还原。",
-    okText: "用印加固",
+    foot: "先备份注册表，可在「撤销」页整笔还原。",
+    okText: "应用加固",
   });
   if (!ok) return;
   const btn = $("btn-harden");
@@ -656,7 +698,7 @@ async function loadTools() {
   }
 }
 
-/* ---------- 销账 ---------- */
+/* ---------- 撤销 ---------- */
 let journalSel = null;
 async function loadJournals() {
   let journals;
@@ -672,7 +714,7 @@ async function loadJournals() {
   $("btn-undo").disabled = true;
   $("undo-hint").textContent = "";
   if (!journals.length) {
-    tb.innerHTML = `<tr><td colspan="4" class="empty">无未销账 journal——账本干净。</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="4" class="empty">暂无可撤销的 journal。</td></tr>`;
     return;
   }
   for (const j of journals) {
@@ -688,7 +730,7 @@ async function loadJournals() {
       tr.classList.add("selected");
       journalSel = j.name;
       $("btn-undo").disabled = false;
-      $("undo-hint").textContent = "选中后可划销还原";
+      $("undo-hint").textContent = "选中后可还原这一笔";
     });
     tb.appendChild(tr);
   }
@@ -697,10 +739,10 @@ async function loadJournals() {
 async function doUndo() {
   if (!journalSel) return;
   const ok = await confirmBox({
-    title: "划销确认",
+    title: "还原确认",
     body: `将按 journal 逆序还原这一笔的全部操作：\n${journalSel}`,
     foot: "还原过程中断可重新执行同一份 journal。",
-    okText: "划销还原",
+    okText: "还原",
   });
   if (!ok) return;
   const btn = $("btn-undo");
@@ -710,7 +752,7 @@ async function doUndo() {
     await api("undo", {method: "POST", body: JSON.stringify({journal: journalSel, confirm: true})});
     stampFly("销");
   } catch (e) {
-    await confirmBox({title: "划销失败", body: e.message, info: true, okText: "知道了", danger: true});
+    await confirmBox({title: "还原失败", body: e.message, info: true, okText: "知道了", danger: true});
   }
   busy(btn, false);
   btn.disabled = true;
@@ -787,27 +829,37 @@ async function loadDupes() {
   busy(btn, false);
 }
 
-/* ---------- 账页索引：当前章节高亮 ---------- */
-function initSpy() {
-  const links = [...document.querySelectorAll("#nav a")];
-  const byId = new Map(links.map((a) => [a.getAttribute("href").slice(1), a]));
-  const io = new IntersectionObserver((entries) => {
-    for (const e of entries) {
-      if (!e.isIntersecting) continue;
-      for (const a of links) a.removeAttribute("aria-current");
-      const a = byId.get(e.target.id);
-      if (!a) continue;
-      a.setAttribute("aria-current", "true");
-      const nav = $("nav");
-      if (nav && nav.scrollWidth > nav.clientWidth) {
-        nav.scrollTo({left: a.offsetLeft - 12, behavior: "smooth"});
-      }
-    }
-  }, {rootMargin: "-35% 0px -60% 0px", threshold: 0});
-  for (const id of byId.keys()) {
-    const s = document.getElementById(id);
-    if (s) io.observe(s);
+/* ---------- 视图切换：侧栏点选，单视图显示，首次访问懒加载 ---------- */
+const VIEWS = ["sec-health", "sec-clean", "sec-harden", "sec-startup", "sec-apps",
+  "sec-updates", "sec-dupes", "sec-tools", "sec-undo"];
+const AUTO = {"sec-startup": loadStartup, "sec-apps": loadApps, "sec-tools": loadTools};
+const visited = new Set();
+let currentView = "sec-health";
+
+function switchView(id, push) {
+  if (!VIEWS.includes(id)) id = "sec-health";
+  currentView = id;
+  for (const v of VIEWS) { const s = $(v); if (s) s.hidden = v !== id; }
+  for (const a of document.querySelectorAll("#nav .nav-item")) {
+    const on = a.getAttribute("href") === "#" + id;
+    a.classList.toggle("active", on);
+    if (on) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current");
   }
+  const c = $("main");
+  if (c) c.scrollTop = 0;
+  if (AUTO[id] && !visited.has(id)) { visited.add(id); AUTO[id](); }
+  if (push !== false) { try { history.replaceState(null, "", "#" + id); } catch (e) {} }
+}
+
+function initNav() {
+  for (const a of document.querySelectorAll("#nav .nav-item")) {
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      switchView(a.getAttribute("href").slice(1));
+    });
+  }
+  const initial = (location.hash || "").slice(1);
+  switchView(VIEWS.includes(initial) ? initial : "sec-health", false);
 }
 
 /* ---------- 接线 ---------- */
@@ -825,9 +877,9 @@ $("btn-undo").onclick = doUndo;
 $("btn-purge").onclick = doPurge;
 $("btn-dupes").onclick = loadDupes;
 
-/* 首屏主操作：滚到清理区再开扫，让用户立刻看到加载态与结果 */
+/* 概览主操作：切到清理视图再开扫，让用户立刻看到加载态与结果 */
 $("btn-scan-hero").onclick = () => {
-  $("sec-clean").scrollIntoView({block: "start"});
+  switchView("sec-clean");
   doScan();
 };
 $("btn-select-visible").onclick = selectVisible;
@@ -851,12 +903,16 @@ $("rule-q").addEventListener("keydown", (e) => {
    file:// 直开时引擎不可达：给出诚实提示而不是静默报错。 */
 let PLATFORM = "unknown";
 async function boot() {
-  initSpy();
+  initNav();
   if (DEMO) {
     $("health-note").textContent = "在线演示：以下为静态样本数据，不是本机扫描结果。";
     $("rp-label").hidden = false;
     loadHealth();
     loadHarden();
+    /* 演示是只读样本：开屏即把概览填满，首屏就有可信的盘点数字（真实引擎仍由用户点扫描） */
+    visited.add("sec-startup"); loadStartup();
+    visited.add("sec-apps"); loadApps();
+    doScan();
     return;
   }
   if (!(location.protocol === "http:" && location.hostname === "127.0.0.1")) {
@@ -864,6 +920,7 @@ async function boot() {
       "当前以 file:// 直接打开——请通过 server.py 打印的 http://127.0.0.1 地址访问。";
     $("harden-body").innerHTML =
       `<tr><td colspan="3" class="empty">请经本地服务器访问（见上方提示）。</td></tr>`;
+    setEngine(false); setSbIco("err"); $("perm-text").textContent = "—";
     return;
   }
   if (!TOKEN) {
@@ -871,6 +928,7 @@ async function boot() {
       "缺少访问令牌——请使用 server.py 打印的完整地址（含 ?t=…）打开本页。";
     $("harden-body").innerHTML =
       `<tr><td colspan="3" class="empty">地址不完整，未加载数据。</td></tr>`;
+    setEngine(false); setSbIco("err"); $("perm-text").textContent = "—";
     return;
   }
   try {

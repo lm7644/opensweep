@@ -99,15 +99,15 @@
   };
 
   function banner() {
-    var wrap = document.querySelector(".wrap");
-    if (!wrap) return;
+    var app = document.querySelector(".app");
+    var body = document.querySelector(".body");
+    if (!app || !body) return;
     var d = document.createElement("div");
+    d.className = "demo-strip";
     d.setAttribute("role", "status");
-    d.style.cssText = "margin:14px 0 0;padding:10px 14px;border:1px solid #b08b3e;" +
-      "background:#faf3e0;color:#4a3a1a;font-size:14px;line-height:1.6;";
     d.textContent = "在线演示 · 页面数字为静态样本，不是本机扫描结果；" +
       "真实清理请在本机运行 python server.py（零外联、可撤销）。";
-    wrap.insertBefore(d, wrap.firstChild);
+    app.insertBefore(d, body);
   }
 
   if (document.readyState === "loading") {

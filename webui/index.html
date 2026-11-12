@@ -3,233 +3,419 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light">
-<title>OpenSweep 账本</title>
-<link rel="icon" href="data:,">
+<meta name="color-scheme" content="dark">
+<title>OpenSweep</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%234f8cff'/%3E%3Cpath d='M16 7l7 3v5.5c0 4.6-3 7.8-7 9.5-4-1.7-7-4.9-7-9.5V10z' fill='none' stroke='%230b0d10' stroke-width='2'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<a class="skip" href="#main">跳到账页正文</a>
-<div class="wrap">
+<a class="skip" href="#main">跳到主内容</a>
 
-  <header class="mast reveal">
-    <div class="mast-row">
-      <h1>OpenSweep 账本</h1>
-      <span class="no" id="edition">No.20261105-v3.2</span>
+<div class="app" id="app">
+
+  <!-- ───────────── 标题栏 ───────────── -->
+  <header class="titlebar">
+    <div class="tb-brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="27" height="27">
+          <defs><linearGradient id="bm" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#4f8cff"/><stop offset="1" stop-color="#38d6c4"/>
+          </linearGradient></defs>
+          <rect x="1" y="1" width="30" height="30" rx="9" fill="url(#bm)"/>
+          <path d="M16 7l7 3v5.5c0 4.6-3 7.8-7 9.5-4-1.7-7-4.9-7-9.5V10z" fill="none" stroke="#0b0d10" stroke-width="1.9" stroke-linejoin="round"/>
+          <path d="M12.4 16l2.6 2.6 4.6-5.2" fill="none" stroke="#0b0d10" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="tb-name">OpenSweep</span>
+      <span class="tb-ver" id="edition">v3.2</span>
     </div>
-    <p class="tagline">清掉这台电脑上可清理的临时文件与使用痕迹——默认只看不动手。</p>
-    <div class="hero">
-      <div class="hero-act">
-        <button class="seal hero-btn" id="btn-scan-hero" type="button">开始只读扫描</button>
-      </div>
-      <p class="hero-hint">三步：扫描 → 勾选 → 清理。不点「清理」，一个文件都不会动。</p>
-      <ul class="hero-facts">
-        <li><b>零外联</b>全程本机，不外发任何字节</li>
-        <li><b>可撤销</b>每笔清理都有 journal，可整笔还原</li>
-        <li><b>先备份</b>注册表先导出，文件先进撤销区</li>
-      </ul>
+    <div class="tb-right">
+      <span class="tb-chip" id="engine-chip" title="引擎连接状态">
+        <span class="dot" id="engine-dot"></span><span id="engine-text">连接中</span>
+      </span>
+      <span class="tb-chip" id="perm-badge" title="当前会话权限">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg>
+        <span id="perm-text">读取中</span>
+      </span>
+      <span class="tb-chip net" title="主程序零外联，数据全部来自本机引擎">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A9 9 0 0 1 21 12"/><path d="M5.1 10.6A9 9 0 0 0 12 21"/><path d="M8.5 8.5A5 5 0 0 0 12 17"/></svg>
+        零外联
+      </span>
     </div>
   </header>
 
-  <aside class="rail reveal d1">
-    <nav class="nav" id="nav" aria-label="账页索引">
-      <a href="#sec-health">台账</a>
-      <a href="#sec-clean">清理</a>
-      <a href="#sec-harden">隐私加固</a>
-      <a href="#sec-startup">启动项</a>
-      <a href="#sec-apps">已装软件</a>
-      <a href="#sec-updates">更新</a>
-      <a href="#sec-dupes">重复快查</a>
-      <a href="#sec-tools">组合工具</a>
-      <a href="#sec-undo">销账</a>
-    </nav>
-  </aside>
+  <!-- ───────────── 主体：侧边栏 + 内容 ───────────── -->
+  <div class="body">
 
-  <main id="main">
-
-    <!-- 台账 -->
-    <section id="sec-health" class="sec reveal d2">
-      <h2>本机台账 <span class="stamp done" id="health-stamp" hidden>已 盘 点</span></h2>
-      <table class="ledger" id="health-table">
-        <thead>
-          <tr><th scope="col">项目</th><th scope="col" class="n">数值</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>可清理痕迹<br><span class="rule-note">只读盘点，未动</span></td><td class="n" id="k-scan-items">—</td></tr>
-          <tr><td>扫描体积<br><span class="rule-note">只读，未删任何文件</span></td><td class="n" id="k-scan-size">待扫描</td></tr>
-          <tr><td>隐私设置加固<br><span class="rule-note">共 15 项，已固化 / 总数</span></td><td class="n" id="k-harden">—</td></tr>
-          <tr><td>自启动点<br><span class="rule-note">只读清单，管控归 Autoruns</span></td><td class="n" id="k-startup">—</td></tr>
-          <tr><td>已装软件<br><span class="rule-note">只读清单，卸载归 BCU</span></td><td class="n" id="k-apps">—</td></tr>
-          <tr><td>未销账 journal<br><span class="rule-note">均可逆序还原</span></td><td class="n" id="k-journals">—</td></tr>
-        </tbody>
-      </table>
-      <div class="btnrow">
-        <button class="ink" id="btn-health">刷新台账</button>
-        <span class="hint" id="health-note" role="status" aria-live="polite"></span>
+    <aside class="sidebar">
+      <nav class="nav" id="nav" aria-label="主导航">
+        <a class="nav-item" href="#sec-health" aria-current="true">
+          <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="1.8"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.8"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.8"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.8"/></svg>
+          <span class="nav-label">概览</span>
+        </a>
+        <a class="nav-item" href="#sec-clean">
+          <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18 14l.9 2.2 2.1.8-2.1.9L18 20l-.9-2.1-2.1-.9 2.1-.8z"/></svg>
+          <span class="nav-label">清理</span>
+        </a>
+        <a class="nav-item" href="#sec-harden">
+          <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4.2"/></svg>
+          <span class="nav-label">隐私加固</span>
+          <span class="nav-badge warn" id="nav-harden-n" hidden>0</span>
+        </a>
+        <div class="nav-sep" role="separator">盘点</div>
+        <a class="nav-item" href="#sec-startup">
+          <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9"/><path d="M6.6 6.6a8 8 0 1 0 10.8 0"/></svg>
+          <span class="nav-label">启动项</span>
+        </a>
+        <a class="nav-item" href="#sec-apps">
+          <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+          <span class="nav-label">已装软件</span>
+        </a>
+        <a class="nav-item" href="#sec-updates">
+          <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V8"/><path d="M7 13l5-5 5 5"/><path d="M5 4h14"/></svg>
+          <span class="nav-label">软件更新</span>
+        </a>
+        <a class="nav-item" href="#sec-dupes">
+          <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          <span class="nav-label">重复快查</span>
+        </a>
+        <a class="nav-item" href="#sec-tools">
+          <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5"/></svg>
+          <span class="nav-label">组合工具</span>
+        </a>
+        <div class="nav-sep" role="separator">历史</div>
+        <a class="nav-item" href="#sec-undo">
+          <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5v5h5"/></svg>
+          <span class="nav-label">撤销</span>
+          <span class="nav-badge" id="nav-undo-n" hidden>0</span>
+        </a>
+      </nav>
+      <div class="sidebar-foot">
+        <span class="sf-line" id="sf-engine">引擎 v3.2</span>
+        <span class="sf-line dim">洁室实现 · 与 CCleaner 无关</span>
       </div>
-    </section>
+    </aside>
 
-    <!-- 清理 -->
-    <section id="sec-clean" class="sec reveal d3">
-      <h2>清理 <span class="sub">勾选规则，逐类确认，先备份后动手</span></h2>
-      <div class="btnrow">
-        <button class="ink" id="btn-scan">只读扫描</button>
-        <button class="seal danger" id="btn-clean" disabled>清理选中</button>
-        <span class="sum" id="clean-sum" role="status" aria-live="polite">尚未选择规则</span>
-      </div>
-      <div class="btnrow">
-        <input id="keep" class="paper-input" placeholder="cookie 白名单，逗号分隔（可选）" size="30" aria-label="cookie 白名单，逗号分隔">
-        <label id="rp-label" class="check-line" hidden>
-          <input type="checkbox" id="rp-check"> 先建系统还原点（Windows）
-        </label>
-      </div>
+    <main class="content" id="main" tabindex="-1">
 
-      <div class="scanbar" id="scanbar" hidden>
-        <label class="scan-q">
-          <span class="sr-only">搜索规则</span>
-          <input id="rule-q" class="paper-input" type="search" autocomplete="off"
-            placeholder="搜规则：临时、浏览器、Edge、微信…" aria-label="按名称或内容搜索清理规则">
-        </label>
-        <div class="chips" role="group" aria-label="按风险等级筛选">
-          <button class="chip" type="button" data-risk="all" aria-pressed="true">全部</button>
-          <button class="chip" type="button" data-risk="high" aria-pressed="false">高风险<span class="chip-n" id="chip-n-high">0</span></button>
-          <button class="chip" type="button" data-risk="medium" aria-pressed="false">中风险<span class="chip-n" id="chip-n-med">0</span></button>
-          <button class="chip" type="button" data-risk="low" aria-pressed="false">低风险<span class="chip-n" id="chip-n-low">0</span></button>
+      <!-- ───── 概览 ───── -->
+      <section id="sec-health" class="view">
+        <div class="view-head">
+          <div class="vh-text">
+            <h2>概览 <span class="stamp done" id="health-stamp" hidden>已盘点</span></h2>
+            <p class="sub">本机只读盘点——默认只看不动手，清理交给「清理」页。</p>
+          </div>
+          <div class="vh-acts">
+            <button class="btn ghost" id="btn-health" type="button">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>
+              刷新
+            </button>
+            <button class="btn primary" id="btn-scan-hero" type="button">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              开始只读扫描
+            </button>
+          </div>
         </div>
-        <div class="scan-acts">
-          <button class="ink sm" id="btn-select-visible" type="button">全选可见</button>
-          <button class="ink sm" id="btn-clear-sel" type="button">清空选择</button>
-          <span class="sum" id="scan-count" role="status" aria-live="polite"></span>
+
+        <div class="stats">
+          <div class="stat accent">
+            <span class="stat-v n" id="k-scan-items">—</span>
+            <span class="stat-l">可清理痕迹</span>
+            <span class="stat-hint">只读盘点，未动</span>
+          </div>
+          <div class="stat">
+            <span class="stat-v" id="k-scan-size">待扫描</span>
+            <span class="stat-l">扫描体积</span>
+            <span class="stat-hint">未删任何文件</span>
+          </div>
+          <div class="stat">
+            <span class="stat-v n" id="k-harden">—</span>
+            <span class="stat-l">隐私设置加固</span>
+            <span class="stat-hint">已固化 / 共 15 项</span>
+          </div>
+          <div class="stat">
+            <span class="stat-v n" id="k-startup">—</span>
+            <span class="stat-l">自启动点</span>
+            <span class="stat-hint">只读 · 管控归 Autoruns</span>
+          </div>
+          <div class="stat">
+            <span class="stat-v n" id="k-apps">—</span>
+            <span class="stat-l">已装软件</span>
+            <span class="stat-hint">只读 · 卸载归 BCU</span>
+          </div>
+          <div class="stat">
+            <span class="stat-v n" id="k-journals">—</span>
+            <span class="stat-l">可撤销 journal</span>
+            <span class="stat-hint">均可逆序还原</span>
+          </div>
         </div>
-      </div>
 
-      <table class="ledger rows" id="scan-table">
-        <thead>
-          <tr>
-            <th scope="col" class="pick"><span class="sr-only">选择</span></th>
-            <th scope="col">规则</th><th scope="col" class="n">条目</th>
-            <th scope="col" class="n">体积</th><th scope="col">备注</th>
-          </tr>
-        </thead>
-        <tbody id="scan-body"><tr class="state-row empty"><td colspan="5" class="empty">尚未扫描——点上面的「开始只读扫描」或这里的「只读扫描」。</td></tr></tbody>
-        <tfoot id="scan-foot" hidden>
-          <tr><td colspan="2">本页合计</td><td class="n" id="sum-items">—</td><td class="n" id="sum-bytes">—</td><td></td></tr>
-        </tfoot>
-      </table>
-      <div class="notice" id="scan-note" role="alert" hidden></div>
-
-      <div class="result" id="clean-result" hidden>
-        <div class="result-head">
-          <h3>本次清理结果</h3>
-          <span class="result-journal" id="result-journal"></span>
+        <div class="overview-note">
+          <div class="on-card">
+            <span class="on-ico ok"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A9 9 0 0 1 21 12"/><path d="M5.1 10.6A9 9 0 0 0 12 21"/></svg></span>
+            <div><b>零外联</b><span>全程本机，不外发任何字节</span></div>
+          </div>
+          <div class="on-card">
+            <span class="on-ico accent"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5v5h5"/></svg></span>
+            <div><b>可撤销</b><span>每笔清理都有 journal，可整笔还原</span></div>
+          </div>
+          <div class="on-card">
+            <span class="on-ico warn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><path d="M12 8v4"/><path d="M12 15.5h.01"/></svg></span>
+            <div><b>先备份</b><span>注册表先导出，文件先进撤销区</span></div>
+          </div>
         </div>
-        <div class="tri">
-          <div class="tri-cell tri-ok"><b id="res-ok">0</b><span>成功</span></div>
-          <div class="tri-cell tri-skip"><b id="res-skip">0</b><span>跳过</span></div>
-          <div class="tri-cell tri-fail"><b id="res-fail">0</b><span>失败</span></div>
+      </section>
+
+      <!-- ───── 清理 ───── -->
+      <section id="sec-clean" class="view" hidden>
+        <div class="view-head">
+          <div class="vh-text">
+            <h2>清理</h2>
+            <p class="sub">勾选规则，逐类确认，先备份后动手。不点「清理」，一个文件都不会动。</p>
+          </div>
         </div>
-        <ul class="result-list" id="result-list"></ul>
-        <div class="btnrow">
-          <button class="ink sm" id="btn-result-close" type="button">收起结果</button>
-          <span class="hint">需要反悔时到「销账」选中该 journal 划销。</span>
+
+        <div class="toolbar">
+          <button class="btn" id="btn-scan" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            只读扫描
+          </button>
+          <button class="btn danger" id="btn-clean" type="button" disabled>清理选中</button>
+          <span class="sum" id="clean-sum" role="status" aria-live="polite">尚未选择规则</span>
         </div>
-      </div>
-    </section>
 
-    <!-- 加固 -->
-    <section id="sec-harden" class="sec reveal d4">
-      <h2>隐私加固 <span class="sub">15 项 Windows 追踪开关，修复前自动备份</span></h2>
-      <div class="btnrow">
-        <button class="ink" id="btn-harden-scan">刷新报告</button>
-        <button class="seal" id="btn-harden">用印加固</button>
-        <span class="hint">只处理未加固（exposed）项，管理员项请用管理员终端</span>
-      </div>
-      <table class="ledger rows">
-        <thead><tr><th scope="col">状态</th><th scope="col">项目</th><th scope="col">当前值</th></tr></thead>
-        <tbody id="harden-body"><tr><td colspan="3" class="empty">读取中……</td></tr></tbody>
-      </table>
-    </section>
+        <div class="toolbar sub">
+          <label class="field grow">
+            <span class="field-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/></svg></span>
+            <input id="keep" class="paper-input" placeholder="Cookie 白名单，逗号分隔（可选）" aria-label="cookie 白名单，逗号分隔">
+          </label>
+          <label id="rp-label" class="check-line" hidden>
+            <input type="checkbox" id="rp-check"> 先建系统还原点（Windows）
+          </label>
+        </div>
 
-    <!-- 启动项 -->
-    <section id="sec-startup" class="sec reveal d5">
-      <h2>启动项 <span class="sub">只读清单，深度管控请用 Autoruns</span></h2>
-      <div class="btnrow"><button class="ink" id="btn-startup">读取自启动清单</button></div>
-      <table class="ledger rows">
-        <thead><tr><th scope="col">类型</th><th scope="col">名称</th><th scope="col">命令</th></tr></thead>
-        <tbody id="startup-body"><tr><td colspan="3" class="empty">未读取。</td></tr></tbody>
-      </table>
-    </section>
+        <div class="scanbar" id="scanbar" hidden>
+          <label class="field search">
+            <span class="field-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+            <input id="rule-q" class="paper-input" type="search" autocomplete="off"
+              placeholder="搜规则：临时、浏览器、Edge、微信…" aria-label="按名称或内容搜索清理规则">
+          </label>
+          <div class="chips" role="group" aria-label="按风险等级筛选">
+            <button class="chip" type="button" data-risk="all" aria-pressed="true">全部</button>
+            <button class="chip" type="button" data-risk="high" aria-pressed="false">高风险<span class="chip-n" id="chip-n-high">0</span></button>
+            <button class="chip" type="button" data-risk="medium" aria-pressed="false">中风险<span class="chip-n" id="chip-n-med">0</span></button>
+            <button class="chip" type="button" data-risk="low" aria-pressed="false">低风险<span class="chip-n" id="chip-n-low">0</span></button>
+          </div>
+          <div class="scan-acts">
+            <button class="btn ghost sm" id="btn-select-visible" type="button">全选可见</button>
+            <button class="btn ghost sm" id="btn-clear-sel" type="button">清空选择</button>
+            <span class="sum" id="scan-count" role="status" aria-live="polite"></span>
+          </div>
+        </div>
 
-    <!-- 已装软件 -->
-    <section id="sec-apps" class="sec reveal d6">
-      <h2>已装软件 <span class="sub">只读清单，卸载请用 BCU 或系统设置</span></h2>
-      <div class="btnrow">
-        <button class="ink" id="btn-apps">列出全部</button>
-        <input id="app-q" class="paper-input" placeholder="搜索名称/发布者" size="24" aria-label="搜索已装软件的名称或发布者">
-      </div>
-      <table class="ledger rows">
-        <thead><tr><th scope="col">名称</th><th scope="col">版本</th><th scope="col">发布者</th></tr></thead>
-        <tbody id="apps-body"><tr><td colspan="3" class="empty">未读取。</td></tr></tbody>
-      </table>
-    </section>
+        <div class="panel">
+          <table class="ledger rows" id="scan-table">
+            <thead>
+              <tr>
+                <th scope="col" class="pick"><span class="sr-only">选择</span></th>
+                <th scope="col">规则</th><th scope="col" class="n">条目</th>
+                <th scope="col" class="n">体积</th><th scope="col">备注</th>
+              </tr>
+            </thead>
+            <tbody id="scan-body"><tr class="state-row empty"><td colspan="5" class="empty">尚未扫描——点「只读扫描」开始本机盘点。</td></tr></tbody>
+            <tfoot id="scan-foot" hidden>
+              <tr><td colspan="2">本页合计</td><td class="n" id="sum-items">—</td><td class="n" id="sum-bytes">—</td><td></td></tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="notice" id="scan-note" role="alert" hidden></div>
 
-    <!-- 更新 -->
-    <section id="sec-updates" class="sec reveal d7">
-      <h2>软件更新 <span class="sub">winget 只读列出，升级自行确认执行</span></h2>
-      <div class="btnrow"><button class="ink" id="btn-updates">查询待升级</button></div>
-      <pre class="mono-block" id="updates-pre">（未查询）</pre>
-    </section>
+        <div class="result" id="clean-result" hidden>
+          <div class="result-head">
+            <h3>本次清理结果</h3>
+            <span class="result-journal" id="result-journal"></span>
+          </div>
+          <div class="tri">
+            <div class="tri-cell tri-ok"><b id="res-ok">0</b><span>成功</span></div>
+            <div class="tri-cell tri-skip"><b id="res-skip">0</b><span>跳过</span></div>
+            <div class="tri-cell tri-fail"><b id="res-fail">0</b><span>失败</span></div>
+          </div>
+          <ul class="result-list" id="result-list"></ul>
+          <div class="toolbar">
+            <button class="btn ghost sm" id="btn-result-close" type="button">收起结果</button>
+            <span class="hint">需要反悔时到「撤销」页选中该 journal 还原。</span>
+          </div>
+        </div>
+      </section>
 
-    <!-- 重复快查 -->
-    <section id="sec-dupes" class="sec reveal">
-      <h2>重复快查 <span class="sub">只读 · 内容哈希比对 · 去重请用 dupeGuru</span></h2>
-      <div class="btnrow">
-        <input id="dupes-dir" class="paper-input" placeholder="扫描目录，如 D:\Downloads" size="34" aria-label="要扫描重复文件的目录">
-        <input id="dupes-min" class="paper-input" placeholder="≥MB" value="10" size="5" aria-label="最小文件体积（MB）">
-        <button class="ink" id="btn-dupes">查找重复</button>
-      </div>
-      <div class="notice" id="dupes-note" role="alert" hidden></div>
-      <table class="ledger rows">
-        <thead><tr><th scope="col" class="n">份数</th><th scope="col" class="n">单份</th><th scope="col" class="n">浪费</th><th scope="col">文件</th></tr></thead>
-        <tbody id="dupes-body"><tr><td colspan="4" class="empty">未扫描。</td></tr></tbody>
-      </table>
-    </section>
+      <!-- ───── 隐私加固 ───── -->
+      <section id="sec-harden" class="view" hidden>
+        <div class="view-head">
+          <div class="vh-text">
+            <h2>隐私加固</h2>
+            <p class="sub">15 项 Windows 追踪开关，修复前自动备份注册表，可撤销。</p>
+          </div>
+          <div class="vh-acts">
+            <button class="btn ghost" id="btn-harden-scan" type="button">刷新报告</button>
+            <button class="btn primary" id="btn-harden" type="button">应用加固</button>
+          </div>
+        </div>
+        <p class="view-tip">只处理未加固（exposed）项；管理员项请在管理员终端运行 <code>harden --yes</code>。</p>
+        <div class="panel">
+          <table class="ledger rows">
+            <thead><tr><th scope="col">状态</th><th scope="col">项目</th><th scope="col">当前值</th></tr></thead>
+            <tbody id="harden-body"><tr><td colspan="3" class="empty">读取中……</td></tr></tbody>
+          </table>
+        </div>
+      </section>
 
-    <!-- 组合工具 -->
-    <section id="sec-tools" class="sec reveal d8">
-      <h2>组合工具 <span class="sub">清理交给本账本，其余交给生态</span></h2>
-      <div class="btnrow"><button class="ink" id="btn-tools">检测伴生工具</button></div>
-      <table class="ledger rows">
-        <thead><tr><th scope="col">在</th><th scope="col">工具</th><th scope="col">用途</th><th scope="col">用法</th></tr></thead>
-        <tbody id="tools-body"><tr><td colspan="4" class="empty">未检测。</td></tr></tbody>
-      </table>
-    </section>
+      <!-- ───── 启动项 ───── -->
+      <section id="sec-startup" class="view" hidden>
+        <div class="view-head">
+          <div class="vh-text">
+            <h2>启动项</h2>
+            <p class="sub">只读清单，深度管控请用 Autoruns。</p>
+          </div>
+          <div class="vh-acts"><button class="btn" id="btn-startup" type="button">刷新清单</button></div>
+        </div>
+        <div class="panel">
+          <table class="ledger rows">
+            <thead><tr><th scope="col">类型</th><th scope="col">名称</th><th scope="col">命令</th></tr></thead>
+            <tbody id="startup-body"><tr><td colspan="3" class="empty">未读取。</td></tr></tbody>
+          </table>
+        </div>
+      </section>
 
-    <!-- 销账 -->
-    <section id="sec-undo" class="sec reveal d9">
-      <h2>销账 <span class="sub">每一份 journal 均可逆序还原</span></h2>
-      <table class="ledger rows" id="undo-table">
-        <thead><tr><th scope="col" class="pick"><span class="sr-only">选择</span></th><th scope="col">journal</th><th scope="col" class="n">写入时间</th><th scope="col" class="n">大小</th></tr></thead>
-        <tbody id="undo-body"><tr><td colspan="4" class="empty">读取中……</td></tr></tbody>
-      </table>
-      <div class="btnrow">
-        <button class="seal" id="btn-undo" disabled>划销还原</button>
-        <button class="ink" id="btn-purge" type="button">清空撤销区</button>
-        <span class="hint" id="undo-hint"></span>
-      </div>
-      <p class="rule-note">「清空撤销区」会永久删除所有备份（已清理痕迹的明文副本），之后无法再撤销任何清理；确定不再还原时才用。</p>
-    </section>
+      <!-- ───── 已装软件 ───── -->
+      <section id="sec-apps" class="view" hidden>
+        <div class="view-head">
+          <div class="vh-text">
+            <h2>已装软件</h2>
+            <p class="sub">只读清单，卸载请用 BCU 或系统设置。</p>
+          </div>
+          <div class="vh-acts">
+            <label class="field">
+              <span class="field-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+              <input id="app-q" class="paper-input" placeholder="搜索名称 / 发布者" aria-label="搜索已装软件的名称或发布者">
+            </label>
+            <button class="btn" id="btn-apps" type="button">列出全部</button>
+          </div>
+        </div>
+        <div class="panel">
+          <table class="ledger rows">
+            <thead><tr><th scope="col">名称</th><th scope="col">版本</th><th scope="col">发布者</th></tr></thead>
+            <tbody id="apps-body"><tr><td colspan="3" class="empty">未读取。</td></tr></tbody>
+          </table>
+        </div>
+      </section>
 
-  </main>
+      <!-- ───── 软件更新 ───── -->
+      <section id="sec-updates" class="view" hidden>
+        <div class="view-head">
+          <div class="vh-text">
+            <h2>软件更新</h2>
+            <p class="sub">winget 只读列出待升级，升级自行确认执行。</p>
+          </div>
+          <div class="vh-acts"><button class="btn" id="btn-updates" type="button">查询待升级</button></div>
+        </div>
+        <div class="panel">
+          <pre class="mono-block" id="updates-pre">（未查询）</pre>
+        </div>
+      </section>
 
-  <footer class="foot">
-    <span>OpenSweep，洁室实现，与 CCleaner/Gen Digital 无关，本页数据全部来自本机引擎</span>
-    <span>零外联 · 不外发任何字节</span>
+      <!-- ───── 重复快查 ───── -->
+      <section id="sec-dupes" class="view" hidden>
+        <div class="view-head">
+          <div class="vh-text">
+            <h2>重复快查</h2>
+            <p class="sub">只读 · 内容哈希比对 · 去重请用 dupeGuru。</p>
+          </div>
+        </div>
+        <div class="toolbar">
+          <label class="field grow">
+            <span class="field-ico"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+            <input id="dupes-dir" class="paper-input" placeholder="扫描目录，如 D:\Downloads" aria-label="要扫描重复文件的目录">
+          </label>
+          <label class="field tiny">
+            <input id="dupes-min" class="paper-input" placeholder="≥MB" value="10" size="5" aria-label="最小文件体积（MB）">
+          </label>
+          <button class="btn" id="btn-dupes" type="button">查找重复</button>
+        </div>
+        <div class="notice" id="dupes-note" role="alert" hidden></div>
+        <div class="panel">
+          <table class="ledger rows">
+            <thead><tr><th scope="col" class="n">份数</th><th scope="col" class="n">单份</th><th scope="col" class="n">浪费</th><th scope="col">文件</th></tr></thead>
+            <tbody id="dupes-body"><tr><td colspan="4" class="empty">未扫描。</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ───── 组合工具 ───── -->
+      <section id="sec-tools" class="view" hidden>
+        <div class="view-head">
+          <div class="vh-text">
+            <h2>组合工具</h2>
+            <p class="sub">清理交给 OpenSweep，其余交给生态。</p>
+          </div>
+          <div class="vh-acts"><button class="btn" id="btn-tools" type="button">检测伴生工具</button></div>
+        </div>
+        <div class="panel">
+          <table class="ledger rows">
+            <thead><tr><th scope="col">在</th><th scope="col">工具</th><th scope="col">用途</th><th scope="col">用法</th></tr></thead>
+            <tbody id="tools-body"><tr><td colspan="4" class="empty">未检测。</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ───── 撤销 ───── -->
+      <section id="sec-undo" class="view" hidden>
+        <div class="view-head">
+          <div class="vh-text">
+            <h2>撤销</h2>
+            <p class="sub">每一份 journal 均可逆序还原；清空撤销区则永久放弃可逆性。</p>
+          </div>
+          <div class="vh-acts">
+            <button class="btn primary" id="btn-undo" type="button" disabled>还原选中</button>
+            <button class="btn danger-ghost" id="btn-purge" type="button">清空撤销区</button>
+          </div>
+        </div>
+        <div class="panel">
+          <table class="ledger rows" id="undo-table">
+            <thead><tr><th scope="col" class="pick"><span class="sr-only">选择</span></th><th scope="col">journal</th><th scope="col" class="n">写入时间</th><th scope="col" class="n">大小</th></tr></thead>
+            <tbody id="undo-body"><tr><td colspan="4" class="empty">读取中……</td></tr></tbody>
+          </table>
+        </div>
+        <div class="toolbar">
+          <span class="hint" id="undo-hint"></span>
+        </div>
+        <p class="view-tip danger">「清空撤销区」会永久删除所有备份（已清理痕迹的明文副本），之后无法再撤销任何清理；确定不再还原时才用。</p>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ───────────── 状态栏 ───────────── -->
+  <footer class="statusbar">
+    <span class="sb-left">
+      <span class="sb-ico" id="sb-ico" aria-hidden="true"></span>
+      <span class="sb-msg" id="health-note" role="status" aria-live="polite">就绪</span>
+    </span>
+    <span class="sb-right">
+      <span id="sb-meta">引擎规则 — 条</span>
+      <span class="sb-sep">·</span>
+      <span>数据全部来自本机</span>
+      <span class="sb-sep">·</span>
+      <span class="sb-ok">全程可撤销</span>
+    </span>
   </footer>
 </div>
 
+<!-- ───────────── 确认对话框 ───────────── -->
 <dialog id="confirm" aria-labelledby="confirm-title">
-  <h3 id="confirm-title">确认</h3>
+  <div class="dlg-head">
+    <span class="dlg-ico" id="dlg-ico" aria-hidden="true"></span>
+    <h3 id="confirm-title">确认</h3>
+  </div>
   <p id="confirm-body"></p>
   <div id="confirm-warn" class="confirm-warn" hidden></div>
   <ul id="confirm-list" class="confirm-list" hidden></ul>
@@ -238,13 +424,15 @@
     <input type="checkbox" id="confirm-ack">
     <span id="confirm-ack-text"></span>
   </label>
-  <div class="btnrow">
-    <button class="ink" id="confirm-no">取消</button>
-    <button class="seal danger" id="confirm-yes">用印确认</button>
+  <div class="dlg-acts">
+    <button class="btn ghost" id="confirm-no">取消</button>
+    <button class="btn danger" id="confirm-yes">确认</button>
   </div>
 </dialog>
 
-<div id="stamp-layer"><div class="stamp big" id="stamp-fly">讫</div></div>
+<!-- ───────────── Toast ───────────── -->
+<div id="stamp-layer" class="toast-layer" aria-live="polite"><div id="stamp-fly" class="toast"></div></div>
+
 <script src="demo.js"></script>
 <script src="app.js"></script>
 </body>

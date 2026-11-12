@@ -7,7 +7,7 @@
 - [x] `opensweep.py`（引擎+CLI）｜ `server.py`（本地 Web 服务）｜ `gui.py`（桌面 GUI）
 - [x] `rules-windows.json`（45 条，Windows）｜ `rules-darwin.json`（11 条，macOS）
 - [x] `harden.json`（15 项 Windows 隐私设置加固）
-- [x] `webui/`（账本设计前端：index/styles/app）
+- [x] `webui/`（深色应用前端：index/styles/app/demo）
 - [x] `tests/`（test_suite.py 跨平台安全套件 + test_saturation.py 对抗饱和套件 + server_selftest.py）
 - [x] `README.md`（双语）｜ `LICENSE`（MIT + 洁室声明）｜ `.gitignore` ｜ `.github/workflows/ci.yml`
 - [x] 文档：`FEATURES.md` / `BENCHMARK.md` / `REVIEW.md` / `ECOSYSTEM.md` / `design-demos/`（含 direction-approved.md，体现流程可复用）

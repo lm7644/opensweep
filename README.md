@@ -16,9 +16,9 @@ v3.1 新增：`report`（自包含 HTML 审计报告）、`dupes`（重复文件
 
 > **重要（默认值变更）**：`junk.temp.user`（`%TEMP%`）已改为 **`risk: high` / `default: false`**，默认 `apply` 不再包含它。该规则用 `patterns: "*"` + `recurse: true` **递归清空整个用户临时目录**（含其他程序正在使用的临时文件），可撤销但会打断运行中的安装程序/应用。需要时请显式点名执行：`python opensweep.py apply --all --rule junk.temp.user --yes`，并先确认没有安装程序在跑。Web UI 会把该规则标为「高风险」并在确认框里单独提示。
 
-三种前端：CLI（`opensweep.py`）/ 暗色桌面 GUI（`gui.py`）/ 账本风本地 Web UI（`server.py` → http://127.0.0.1）。规则库为声明式 JSON（`rules-windows.json` / `rules-darwin.json` / `harden.json`），按平台加载。
+三种前端：CLI（`opensweep.py`）/ 暗色桌面 GUI（`gui.py`）/ 深色应用式本地 Web UI（`server.py` → http://127.0.0.1，标题栏＋侧栏＋状态栏布局，对齐桌面 GUI）。规则库为声明式 JSON（`rules-windows.json` / `rules-darwin.json` / `harden.json`），按平台加载。
 
-> **在线演示**：[https://lm7644.github.io/opensweep/](https://lm7644.github.io/opensweep/) —— GitHub Pages 上的账本 Web UI 静态样本页；页面数字为演示数据，不是本机扫描结果，真实清理仍需本机运行 `python server.py`。
+> **在线演示**：[https://lm7644.github.io/opensweep/](https://lm7644.github.io/opensweep/) —— GitHub Pages 上的深色应用式 Web UI 静态样本页；页面数字为演示数据，不是本机扫描结果，真实清理仍需本机运行 `python server.py`。
 
 > OpenSweep 为洁室实现：不含任何商业产品的代码、资产或规则文本；清理目标位置均为公开取证事实。与任何商业清理器无关。
 
@@ -36,7 +36,7 @@ python opensweep.py dupes <dir>    # 重复文件快查（只读，≥10MB 内�
 python opensweep.py report         # 自包含 HTML 审计报告（账本风格）
 python opensweep.py undo <journal> # 按 journal 逆序还原一整笔清理
 python opensweep.py purge          # 撤销区盘点（只读预览）；--yes 永久清空；--shred 先覆写
-python server.py                   # 账本 Web UI（打印带 token 的本地地址）
+python server.py                   # 深色应用 Web UI（打印带 token 的本地地址）
 python gui.py                      # 桌面 GUI
 python tests/test_suite.py         # 沙箱安全测试（清单哈希 + 多轮 apply/undo）
 ```
@@ -69,13 +69,13 @@ python tests/test_suite.py         # 沙箱安全测试（清单哈希 + 多轮 
 <a id="english"></a>
 ## English
 
-> **Live demo**: [https://lm7644.github.io/opensweep/](https://lm7644.github.io/opensweep/) — static sample of the ledger Web UI on GitHub Pages. Numbers are demo data, not a scan of your machine; run `python server.py` locally for real cleaning.
+> **Live demo**: [https://lm7644.github.io/opensweep/](https://lm7644.github.io/opensweep/) — static sample of the dark, desktop-app-style Web UI on GitHub Pages. Numbers are demo data, not a scan of your machine; run `python server.py` locally for real cleaning.
 
 A privacy-trace **and junk** cleaner for Windows & macOS (clean-room implementation, **v3.2**). **Zero dependencies** (Python 3.10+ stdlib only), **no outbound traffic from the app** (winget runs only when you open the updates page; the maintainer-only `upload_to_github.py` talks to the GitHub API), **read-only by default**, and **everything reversible** via journals. Credential stores (Login Data / Bookmarks) are invisible to every rule. Beyond cleaning, it offers read-only inventories (startup / installed apps / pending updates / duplicate quick-scan) and a composition layer that defers the rest to the ecosystem.
 
 **Privacy boundary:** cleaning moves plaintext copies into the undo area so they stay reversible — the traces are not gone until you `purge` the undo area (`--shred` overwrites first, best-effort, not forensic-grade). See the Chinese section above for the full honest limitations.
 
-Front-ends: CLI (`opensweep.py`), dark desktop GUI (`gui.py`), and a ledger-style local web UI (`server.py` → http://127.0.0.1, token-gated). Rules are declarative JSON loaded per platform (`rules-windows.json` / `rules-darwin.json` / `harden.json`).
+Front-ends: CLI (`opensweep.py`), dark desktop GUI (`gui.py`), and a dark, desktop-app-style local web UI (`server.py` → http://127.0.0.1, token-gated). Rules are declarative JSON loaded per platform (`rules-windows.json` / `rules-darwin.json` / `harden.json`).
 
 ```bash
 python opensweep.py scan    # read-only scan

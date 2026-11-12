@@ -1,6 +1,6 @@
 # OpenSweep vs CCleaner 7.13 竞品对标记分卡（更新：2026-11-09，v3.2 撤销区 purge + 安全加固）
 
-对标基线：CCleaner 7.13.1573（本机实测逆向）；OpenSweep v3.2（45 规则引擎 + 15 项加固 + 账本 web UI + 桌面 GUI + 组合层 + 撤销区 purge）。
+对标基线：CCleaner 7.13.1573（本机实测逆向）；OpenSweep v3.2（45 规则引擎 + 15 项加固 + 深色应用 web UI + 桌面 GUI + 组合层 + 撤销区 purge）。
 
 ## 一、能力复刻记分卡（除隐私外的各项能力）
 
